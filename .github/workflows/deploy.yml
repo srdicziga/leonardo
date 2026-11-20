@@ -1,0 +1,87 @@
+name: Build dist & Auto-Refresh cPanel
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-and-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build production dist
+        run: npm run build
+
+      - name: Remove server bundle artifact
+        run: rm -f server.js
+
+      - name: Commit dist folder to GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f dist
+          if git diff --cached --quiet; then
+            echo "Mapa dist/ je že posodobljena — brez novega commita."
+          else
+            git commit -m "chore: samodejna gradnja mape dist [skip ci]"
+            git push origin "HEAD:${{ github.ref_name }}"
+          fi
+
+      - name: Auto-refresh cPanel Git Version Control
+        env:
+          CPANEL_HOST: ${{ secrets.CPANEL_HOST }}
+          CPANEL_USER: ${{ secrets.CPANEL_USER }}
+          CPANEL_API_TOKEN: ${{ secrets.CPANEL_API_TOKEN }}
+          CPANEL_REPO_ROOT: ${{ secrets.CPANEL_REPO_ROOT }}
+          BRANCH_NAME: ${{ github.ref_name }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [ -z "$CPANEL_HOST" ] || [ -z "$CPANEL_USER" ] || [ -z "$CPANEL_API_TOKEN" ]; then
+            echo "cPanel API skrivnosti (CPANEL_HOST, CPANEL_USER, CPANEL_API_TOKEN) niso nastavljene."
+            echo "Mapa dist/ je bila uspešno ustvarjena na GitHubu. Stran lahko v cPanelu ročno osvežite (Update from Remote -> Deploy HEAD Commit) ali dodate API skrivnosti za popolno avtomatiko."
+            exit 0
+          fi
+
+          REPO_ROOT="${CPANEL_REPO_ROOT:-/home/${CPANEL_USER}/repositories/${REPO_NAME}}"
+          HOST_CLEAN="${CPANEL_HOST#https://}"
+          HOST_CLEAN="${HOST_CLEAN#http://}"
+          HOST_CLEAN="${HOST_CLEAN%%:*}"
+          HOST_CLEAN="${HOST_CLEAN%%/*}"
+
+          echo "1/2: Prenos zadnje različice z GitHuba v cPanel (${REPO_ROOT}, veja ${BRANCH_NAME})..."
+          UPDATE_RES=$(curl -fsS --get \
+            -H "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+            --data-urlencode "repository_root=${REPO_ROOT}" \
+            --data-urlencode "branch=${BRANCH_NAME}" \
+            "https://${HOST_CLEAN}:2083/execute/VersionControl/update")
+          echo "$UPDATE_RES"
+
+          echo "2/2: Zagon .cpanel.yml namestitve v nova.leonardo-house.com..."
+          DEPLOY_RES=$(curl -fsS --get \
+            -H "Authorization: cpanel ${CPANEL_USER}:${CPANEL_API_TOKEN}" \
+            --data-urlencode "repository_root=${REPO_ROOT}" \
+            "https://${HOST_CLEAN}:2083/execute/VersionControlDeployment/create")
+          echo "$DEPLOY_RES"

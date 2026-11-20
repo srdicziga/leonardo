@@ -1,10 +1,7 @@
 ---
 deployment:
   tasks:
-    # Samodejna namestitev zgrajene spletne strani (dist/) v poddomeno nova.leonardo-house.com
-    # Privzeta pot za poddomeno z lastnim korenom v cPanelu: $HOME/nova.leonardo-house.com/
-    # Ce ima poddomena v cPanelu drugacen Document Root (npr. public_html/nova.leonardo-house.com), prilagodi DEPLOYPATH.
-    - export DEPLOYPATH="${HOME:-/home/$(whoami)}/nova.leonardo-house.com/"
+    - export DEPLOYPATH=/home/leonardohouse/nova.leonardo-house.com/
     - /bin/mkdir -p "$DEPLOYPATH"
     - /bin/sh -c '[ ! -f "${DEPLOYPATH}runtime-config.js" ] || /bin/cp -f "${DEPLOYPATH}runtime-config.js" "${DEPLOYPATH}.runtime-config.bak"'
     - /bin/cp -Rf dist/. "$DEPLOYPATH"
