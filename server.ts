@@ -210,6 +210,16 @@ async function startServer() {
     res.status(200).json({ ok: true });
   });
 
+  app.get('/runtime-config.js', (_req, res) => {
+    const googleMapsApiKey =
+      process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || '';
+    res.type('application/javascript');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.send(
+      `window.__LEONARDO_CONFIG__=${JSON.stringify({ googleMapsApiKey })};`
+    );
+  });
+
   app.get('/api/airbnb-calendar', async (req, res) => {
     try {
       const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';

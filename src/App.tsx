@@ -1142,6 +1142,7 @@ export default function App() {
   const [legalModal, setLegalModal] = useState<'privacy' | 'cookies' | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [showBackToTop, setShowBackToTop] = useState<boolean>(false);
+  const [mapsQuotaExceeded, setMapsQuotaExceeded] = useState<boolean>(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const featureSliderRef = useRef<HTMLDivElement | null>(null);
   const [featureCanScrollPrev, setFeatureCanScrollPrev] = useState<boolean>(false);
@@ -1455,6 +1456,13 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Listen for Google Maps Platform quota exhaustion event
+  useEffect(() => {
+    const handleQuotaExceeded = () => setMapsQuotaExceeded(true);
+    window.addEventListener('gmp-quota-exceeded', handleQuotaExceeded);
+    return () => window.removeEventListener('gmp-quota-exceeded', handleQuotaExceeded);
+  }, []);
+
   // Keyboard navigation for Lightbox & Mobile Menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1485,6 +1493,22 @@ export default function App() {
 
   return (
     <div id="top" className="min-h-screen flex flex-col bg-[#FAF8F4] text-[#1E251F] overflow-x-clip">
+      {mapsQuotaExceeded && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
+          <span>
+            Google Maps Platform quota reached. If you are the app owner, visit{' '}
+            <a
+              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold text-amber-950 hover:text-amber-800"
+            >
+              maps developer site
+            </a>{' '}
+            for instructions to update your account.
+          </span>
+        </div>
+      )}
       {/* TOP BAR CONTRACT: Strictly 3 zones */}
       <header className="sticky top-0 z-40 bg-[#FAF8F4]/95 backdrop-blur-md border-b border-[#E5DFD3]">
         <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 px-3.5 sm:px-6 lg:px-10 py-2 sm:py-2.5">
@@ -2266,27 +2290,26 @@ export default function App() {
                   onClick={() => scrollFeatureSlider(-1)}
                   disabled={!featureCanScrollPrev}
                   aria-label="Prejšnja slika prednosti"
-                  className={`group/arrow absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 h-1/2 w-12 sm:w-16 flex items-center justify-center bg-transparent border-0 p-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D5C37E] ${
+                  className={`group/arrow absolute left-8 sm:left-11 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border backdrop-blur-xs transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D5C37E] ${
                     featureCanScrollPrev
-                      ? 'text-white opacity-95 hover:opacity-100 cursor-pointer'
-                      : 'text-white opacity-35 cursor-default'
+                      ? 'bg-[#141A13]/25 hover:bg-[#141A13]/55 border-white/25 hover:border-white/55 text-white/85 hover:text-white opacity-80 hover:opacity-100 cursor-pointer'
+                      : 'bg-[#141A13]/12 border-white/10 text-white/40 opacity-35 cursor-default'
                   }`}
                 >
                   <svg
-                    viewBox="0 0 32 120"
+                    viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden="true"
-                    className={`h-full w-auto overflow-visible drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)] transition-transform duration-200 ${
-                      featureCanScrollPrev ? 'group-hover/arrow:-translate-x-1 group-hover/arrow:scale-[1.03]' : ''
+                    className={`w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-200 ${
+                      featureCanScrollPrev ? 'group-hover/arrow:-translate-x-0.5' : ''
                     }`}
                   >
                     <path
-                      d="M25 6 L7 60 L25 114"
+                      d="M15 5 L8 12 L15 19"
                       stroke="currentColor"
-                      strokeWidth={3.75}
+                      strokeWidth={1.75}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      vectorEffect="non-scaling-stroke"
                     />
                   </svg>
                 </button>
@@ -2296,27 +2319,26 @@ export default function App() {
                   onClick={() => scrollFeatureSlider(1)}
                   disabled={!featureCanScrollNext}
                   aria-label="Naslednja slika prednosti"
-                  className={`group/arrow absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 h-1/2 w-12 sm:w-16 flex items-center justify-center bg-transparent border-0 p-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D5C37E] ${
+                  className={`group/arrow absolute right-8 sm:right-11 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center border backdrop-blur-xs transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D5C37E] ${
                     featureCanScrollNext
-                      ? 'text-white opacity-95 hover:opacity-100 cursor-pointer'
-                      : 'text-white opacity-35 cursor-default'
+                      ? 'bg-[#141A13]/25 hover:bg-[#141A13]/55 border-white/25 hover:border-white/55 text-white/85 hover:text-white opacity-80 hover:opacity-100 cursor-pointer'
+                      : 'bg-[#141A13]/12 border-white/10 text-white/40 opacity-35 cursor-default'
                   }`}
                 >
                   <svg
-                    viewBox="0 0 32 120"
+                    viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden="true"
-                    className={`h-full w-auto overflow-visible drop-shadow-[0_2px_10px_rgba(0,0,0,0.75)] transition-transform duration-200 ${
-                      featureCanScrollNext ? 'group-hover/arrow:translate-x-1 group-hover/arrow:scale-[1.03]' : ''
+                    className={`w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform duration-200 ${
+                      featureCanScrollNext ? 'group-hover/arrow:translate-x-0.5' : ''
                     }`}
                   >
                     <path
-                      d="M7 6 L25 60 L7 114"
+                      d="M9 5 L16 12 L9 19"
                       stroke="currentColor"
-                      strokeWidth={3.75}
+                      strokeWidth={1.75}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      vectorEffect="non-scaling-stroke"
                     />
                   </svg>
                 </button>

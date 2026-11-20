@@ -1,10 +1,11 @@
 ---
 deployment:
   tasks:
-    # PRILAGODITE 'UPORABNIK' svojemu cPanel uporabniskemu imenu (npr. /home/leonardo/nova.leonardo-house.com/)
-    # Ce na strezniku uporabljate statični prenos (brez Node.js), prej lokalno pozenite 'npm run build'
-    # ali na cPanelu vkljucite Node.js v okolju (odkomentirajte spodnji vrstici za npm).
-    - export DEPLOYPATH=/home/UPORABNIK/nova.leonardo-house.com/
+    # Samodejna namestitev zgrajene spletne strani (dist/) v poddomeno nova.leonardo-house.com
+    # Privzeta pot za poddomeno z lastnim korenom v cPanelu: $HOME/nova.leonardo-house.com/
+    # Ce ima poddomena v cPanelu drugacen Document Root (npr. public_html/nova.leonardo-house.com), prilagodi DEPLOYPATH.
+    - export DEPLOYPATH="${HOME:-/home/$(whoami)}/nova.leonardo-house.com/"
     - /bin/mkdir -p "$DEPLOYPATH"
-    # - npm ci && npm run build
-    - /bin/cp -R dist/. "$DEPLOYPATH"
+    - /bin/sh -c '[ ! -f "${DEPLOYPATH}runtime-config.js" ] || /bin/cp -f "${DEPLOYPATH}runtime-config.js" "${DEPLOYPATH}.runtime-config.bak"'
+    - /bin/cp -Rf dist/. "$DEPLOYPATH"
+    - /bin/sh -c '[ ! -f "${DEPLOYPATH}.runtime-config.bak" ] || /bin/mv -f "${DEPLOYPATH}.runtime-config.bak" "${DEPLOYPATH}runtime-config.js"'

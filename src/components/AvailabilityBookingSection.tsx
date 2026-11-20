@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Check, Mail, Phone, MapPin, MessageCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { CONTACT_INFO, Language } from '../data/villaData';
 import { AmenityAnimatedIcon } from './AmenityAnimatedIcon';
+import { LeonardoLocationMap } from './LeonardoLocationMap';
 
 function generateSecurityCode(): string {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -425,9 +426,9 @@ export const AvailabilityBookingSection: React.FC<AvailabilityBookingSectionProp
           <div aria-hidden="true" className="w-14 h-0.5 bg-[#3A4F37] rounded-full mt-4" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           {/* Left 7 Columns: Unified Calendar + Direct Contact Info Module */}
-          <div className="lg:col-span-7 h-full bg-[#FAF8F4] border border-[#E2DBD0] border-t-2 border-t-[#3A4F37] rounded-2xl p-6 sm:p-8 shadow-[0_12px_34px_rgba(30,37,31,0.06)] flex flex-col justify-between">
+          <div className="lg:col-span-7 bg-[#FAF8F4] border border-[#E2DBD0] border-t-2 border-t-[#3A4F37] rounded-2xl p-6 sm:p-8 shadow-[0_12px_34px_rgba(30,37,31,0.06)] flex flex-col">
             {/* Calendar Section */}
             <div>
               <div>
@@ -550,8 +551,11 @@ export const AvailabilityBookingSection: React.FC<AvailabilityBookingSectionProp
               </div>
             </div>
 
+            {/* Interactive Google Map Showing Leonardo House Location */}
+            <LeonardoLocationMap lang={lang} />
+
             {/* Direct Host Contact Section (Bottom of Unified Card) */}
-            <div className="mt-8 pt-7 border-t border-[#E5DFD3]">
+            <div className="mt-6 pt-6 border-t border-[#E5DFD3]">
               <h3 className="font-serif text-2xl font-semibold text-[#1E251F] mb-5">
                 {labels.contactCardTitle}
               </h3>
@@ -682,7 +686,7 @@ export const AvailabilityBookingSection: React.FC<AvailabilityBookingSectionProp
           </div>
 
           {/* Right 5 Columns: Inquiry Form */}
-          <div className="lg:col-span-5 h-full bg-[#FAF8F4] border border-[#E2DBD0] border-t-2 border-t-[#3A4F37] rounded-2xl p-6 sm:p-8 shadow-[0_12px_34px_rgba(30,37,31,0.06)]">
+          <div className="lg:col-span-5 bg-[#FAF8F4] border border-[#E2DBD0] border-t-2 border-t-[#3A4F37] rounded-2xl p-6 sm:p-8 shadow-[0_12px_34px_rgba(30,37,31,0.06)]">
             {!submitted ? (
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div className="flex items-center justify-between pb-4 border-b border-[#E5DFD3]">

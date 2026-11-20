@@ -1,71 +1,63 @@
 # Leonardo House (`nova.leonardo-house.com`)
 
-Spletna predstavitev posesti **Leonardo House** v Bužiniji pri Novigradu (React + Vite + Tailwind CSS + Express/PHP Airbnb sinhronizacija koledarja).
+Spletna predstavitev posesti **Leonardo House** v Bužiniji pri Novigradu (React + Vite + Tailwind CSS + PHP/Express sinhronizacija Airbnb koledarja + Google Maps).
+
+Projekt je pripravljen tako, da ga **neposredno iz Google AI Studia** potisnete (*commit / push*) v svoj GitHub repozitorij, nato pa ga prek **cPanel → Git™ Version Control** z enim klikom namestite na poddomeno **`nova.leonardo-house.com`**.
 
 ---
 
-## 1. Prenos kode na GitHub
+## 1. Neposreden Commit iz AI Studia na GitHub
 
-V korenski mapi projekta zaženite:
+V repozitorij sta vključeni tako izvorna koda (`src/`, `public/`, `server.ts`) kot tudi sveže zgrajena produkcijska različica v mapi `dist/` (vključno z `.htaccess`, `api/airbnb-calendar.php` in `runtime-config.js`), brez vgrajenih tajnih ključev:
 
-```bash
-git init
-git add .
-git commit -m "Priprava spletne strani Leonardo House za produkcijo"
-git branch -M main
-git remote add origin https://github.com/VAS_UPORABNIK/leonardo-house.git
-git push -u origin main
-```
-
-Datoteka `.gitignore` samodejno izključi `node_modules/`, `dist/`, `server.js`, `.env*` in interne delovne mape.
+1. V Google AI Studiu kliknite ikono za **GitHub** (Save / Commit to GitHub) in izberite ali ustvarite repozitorij (npr. `leonardo-house`).
+2. Potrdite commit in push na vejo `main`.
+3. Če projekt urejate tudi lokalno:
+   ```bash
+   git add .
+   git commit -m "Posodobitev spletne strani Leonardo House"
+   git push origin main
+   ```
 
 ---
 
 ## 2. Ustvarjanje poddomene v cPanelu
 
 1. Prijavite se v **cPanel** vašega gostovanja.
-2. Odprite **Domains** -> **Create A New Domain**.
-3. Vnesite: `nova.leonardo-house.com`.
-4. Odkljukajte *"Share document root"* in pustite pot npr. `/home/UPORABNIK/nova.leonardo-house.com`.
-5. V **SSL/TLS Status** zaženite **Run AutoSSL**, da poddomena dobi veljaven HTTPS certifikat.
+2. Odprite **Domains** → **Create A New Domain**.
+3. Vnesite domeno: `nova.leonardo-house.com`.
+4. **Odkljukajte** *"Share document root"* in pustite privzeto pot `/home/VAS_UPORABNIK/nova.leonardo-house.com` (na to pot kaže `.cpanel.yml`).
+5. Po ustvarjanju v **SSL/TLS Status** kliknite **Run AutoSSL**, da poddomena dobi veljaven HTTPS certifikat.
 
 ---
 
-## 3. Namestitev na cPanel (izberite enega od dveh načinov)
+## 3. Povezava prek cPanel Git™ Version Control
 
-### Način A: Klasično cPanel gostovanje (Apache + PHP — najenostavnejše)
+1. V cPanelu odprite **Git™ Version Control** → **Create**.
+2. Vnesite:
+   - **Clone URL**: URL vašega GitHub repozitorija (npr. `https://github.com/VAS_UPORABNIK/leonardo-house.git` ali SSH, če je repozitorij zaseben).
+   - **Repository Path**: `/home/VAS_UPORABNIK/repositories/leonardo-house`
+   - **Repository Name**: `leonardo-house`
+3. Kliknite **Create**.
+4. Pri ustvarjenem repozitoriju kliknite **Manage** → zavihek **Pull or Deploy**:
+   - Če je gumb **Update from Remote** aktiven, kliknite nanj (da potegnete zadnje spremembe).
+   - Kliknite **Deploy HEAD Commit**.
+5. Datoteka `.cpanel.yml` bo samodejno prekopirala celotno vsebino `dist/` (vključno z `.htaccess` in `/api/airbnb-calendar.php`) v `/home/VAS_UPORABNIK/nova.leonardo-house.com/`.
 
-Projekt vključuje `public/.htaccess` in `public/api/airbnb-calendar.php`, ki se ob gradnji samodejno prekopirata v `dist/`. Tako delujejo SPA poti, preusmeritev na HTTPS in živa sinhronizacija z Airbnb koledarjem brez potrebe po Node.js strežniku.
-
-1. Na svojem računalniku zaženite:
-   ```bash
-   npm install
-   npm run build
-   ```
-2. Odprite mapo `dist/`.
-3. V cPanelu odprite **File Manager** -> pojdite v korensko mapo poddomene (`nova.leonardo-house.com`).
-4. V zgornjem desnem kotu **Settings** vključite **"Show Hidden Files (dotfiles)"**, da boste videli `.htaccess`.
-5. Naložite **celotno vsebino** mape `dist/` (datoteke `index.html`, `.htaccess` ter mapi `assets/`, `images/`, `api/`) neposredno v mapo `nova.leonardo-house.com`.
-6. Odprite `https://nova.leonardo-house.com` in preverite delovanje strani ter koledarja.
+*(Opomba: Če ima vaša poddomena v cPanelu nastavljen drugačen Document Root, npr. `public_html/nova.leonardo-house.com`, v datoteki `.cpanel.yml` prilagodite vrstico `DEPLOYPATH`.)*
 
 ---
 
-### Način B: cPanel "Setup Node.js App" + Git™ Version Control
+## 4. Vklop Google Maps na produkcijski poddomeni (opcijsko)
 
-Če vaše gostovanje podpira Node.js aplikacije:
+Zaradi varnosti in pravil GitHuba ključ Google Maps API ni zapisan v kodi repozitorija. Če želite, da na `nova.leonardo-house.com` prikazuje interaktivni zemljevid (sicer se prikaže nadomestni okvirček z naslovom in gumbom za Google Zemljevide):
 
-1. V cPanelu odprite **Git™ Version Control** -> **Create**, vnesite URL vašega GitHub repozitorija in pot npr. `/home/UPORABNIK/repositories/leonardo-house`.
-2. Odprite **Setup Node.js App** -> **Create Application**:
-   - **Node.js version**: 20.x ali novejši
-   - **Application mode**: `Production`
-   - **Application root**: pot do repozitorija
-   - **Application URL**: `nova.leonardo-house.com`
-   - **Application startup file**: `server.js`
-3. V terminalu / prek gumba **Run NPM Install** namestite pakete in zgradite produkcijsko različico:
-   ```bash
-   npm install
-   npm run build
+1. V Google Cloud Console ustvarite API ključ z vklopljenim **Maps JavaScript API** in ga omejite z **HTTP referrer** na `https://nova.leonardo-house.com/*`.
+2. V cPanelu odprite **File Manager** → mapo poddomene `nova.leonardo-house.com`.
+3. Uredite datoteko `runtime-config.js` in vstavite svoj ključ:
+   ```js
+   window.__LEONARDO_CONFIG__ = window.__LEONARDO_CONFIG__ || {
+     googleMapsApiKey: 'VAS_OMEJEN_GOOGLE_MAPS_KLJUC',
+   };
    ```
-4. Ponovno zaženite aplikacijo v cPanelu (**Restart**).
-
-*(Opomba: če želite avtomatsko kopiranje prek `.cpanel.yml`, v datoteki `.cpanel.yml` zamenjajte `UPORABNIK` z vašim cPanel uporabniškim imenom.)*
+4. Pri prihodnjih posodobitvah prek **Deploy HEAD Commit** skripta `.cpanel.yml` samodejno ohrani vašo nastavljeno datoteko `runtime-config.js`.
