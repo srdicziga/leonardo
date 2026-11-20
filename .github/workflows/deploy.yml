@@ -30,7 +30,7 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Build production dist
         run: npm run build
@@ -47,7 +47,20 @@ jobs:
             echo "Mapa dist/ je že posodobljena — brez novega commita."
           else
             git commit -m "chore: samodejna gradnja mape dist [skip ci]"
-            git push origin "HEAD:${{ github.ref_name }}"
+            if ! git push origin "HEAD:${{ github.ref_name }}"; then
+              echo "Oddaljena veja se je medtem posodobila — usklajujem z origin/${{ github.ref_name }}..."
+              git fetch origin "${{ github.ref_name }}"
+              git reset --hard "origin/${{ github.ref_name }}"
+              npm run build
+              rm -f server.js
+              git add -f dist
+              if git diff --cached --quiet; then
+                echo "Mapa dist/ na oddaljeni veji je že posodobljena — dodaten push ni potreben."
+              else
+                git commit -m "chore: samodejna gradnja mape dist [skip ci]"
+                git push origin "HEAD:${{ github.ref_name }}"
+              fi
+            fi
           fi
 
       - name: Auto-refresh cPanel Git Version Control
