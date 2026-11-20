@@ -2550,8 +2550,7 @@ export default function App() {
               </div>
 
               {/* House Rules (Wider module, equal height, preserved dark olive & gold palette) */}
-              <div className="group relative lg:col-span-7 flex flex-col justify-between h-full p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-[#32442F] via-[#293827] to-[#212E1F] border border-[#43583F] shadow-[inset_0_2px_0_0_#C9BA7B,0_18px_42px_rgba(24,33,22,0.22)]">
-                <CardHoverOliveBorder borderRadius={16} strokeWidth={2} color="#D5C37E" />
+              <div className="relative lg:col-span-7 flex flex-col justify-between h-full p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-[#32442F] via-[#293827] to-[#212E1F] border border-[#43583F] shadow-[inset_0_2px_0_0_#C9BA7B,0_18px_42px_rgba(24,33,22,0.22)]">
                 <div className="flex items-center gap-3.5 pb-4 border-b border-white/12">
                   <AmenityAnimatedIcon groupId="house-rules" />
                   <div className="min-w-0">
