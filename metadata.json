@@ -1,0 +1,6 @@
+{
+  "name": "Leonardo House — Mediteranska Vila med Oljkami v Novigradu",
+  "description": "Zasebna mediteranska posest z dvema ločenima hiškama, ogrevanim bazenom in lastnim oljčnim nasadom v Bužiniji pri Novigradu v Istri.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

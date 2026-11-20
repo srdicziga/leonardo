@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", "Lora", Georgia, serif;
+  --font-sans: "Lora", "Playfair Display", Georgia, serif;
+  --font-mono: "Lora", Georgia, serif;
+  --font-calligraphy: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-script: "Great Vibes", "Cormorant Garamond", cursive;
+  --font-logo-sans: "Montserrat", sans-serif;
+}
+
+@utility font-calligraphy {
+  font-family: var(--font-calligraphy);
+}
+
+@utility font-script {
+  font-family: var(--font-script);
+}
+
+@utility font-logo-sans {
+  font-family: var(--font-logo-sans);
+}
+
+@utility small-caps {
+  font-variant-caps: small-caps;
+}
+
+@utility logo-crisp {
+  filter: url(#lh-crisp-logo) contrast(1.05) saturate(1.06);
+}
+
+@layer base {
+  html,
+  body {
+    font-family: var(--font-sans);
+    background-color: #FAF8F4;
+    color: #1E251F;
+    font-feature-settings: "kern" 1, "liga" 1;
+    letter-spacing: 0.005em;
+  }
+
+  section[id],
+  div[id]:not(#root):not(#top) {
+    scroll-margin-top: 3.75rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display,
+  .font-serif {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+
+  p,
+  span,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  li,
+  td,
+  th {
+    font-family: inherit;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes oliveSway {
+  0%, 100% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(1.8deg);
+  }
+}
+
+@keyframes oliveSwayReverse {
+  0%, 100% {
+    transform: rotate(1.5deg);
+  }
+  50% {
+    transform: rotate(-1.8deg);
+  }
+}
+
+@keyframes leafFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(-6px) rotate(6deg);
+    opacity: 1;
+  }
+}
+
+@keyframes oliveDropPulse {
+  0%, 100% {
+    transform: scale(1) translateY(0px);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08) translateY(2px);
+    opacity: 1;
+  }
+}
+
+.animate-olive-sway {
+  animation: oliveSway 6.5s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+.animate-olive-sway-right {
+  animation: oliveSwayReverse 7.2s ease-in-out infinite;
+  transform-origin: right center;
+}
+
+.animate-leaf-float {
+  animation: leafFloat 5.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-olive-drop {
+  animation: oliveDropPulse 4.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.olive-atelier-texture {
+  background-color: #293b22;
+  background-image:
+    linear-gradient(135deg, rgba(35, 51, 28, 0.36) 0%, rgba(45, 65, 37, 0.22) 50%, rgba(31, 46, 25, 0.4) 100%),
+    radial-gradient(ellipse at 14% 12%, rgba(213, 195, 126, 0.14), transparent 52%),
+    radial-gradient(ellipse at 88% 88%, rgba(201, 186, 123, 0.12), transparent 50%),
+    url("/assets/aistudio/image_4917608d.png");
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 460px auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

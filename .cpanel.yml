@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    # PRILAGODITE 'UPORABNIK' svojemu cPanel uporabniskemu imenu (npr. /home/leonardo/nova.leonardo-house.com/)
+    # Ce na strezniku uporabljate statični prenos (brez Node.js), prej lokalno pozenite 'npm run build'
+    # ali na cPanelu vkljucite Node.js v okolju (odkomentirajte spodnji vrstici za npm).
+    - export DEPLOYPATH=/home/UPORABNIK/nova.leonardo-house.com/
+    - /bin/mkdir -p "$DEPLOYPATH"
+    # - npm ci && npm run build
+    - /bin/cp -R dist/. "$DEPLOYPATH"

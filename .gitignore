@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+server.js
+coverage/
+.aistudio/
+.DS_Store
+Thumbs.db
+*.log
+*.tsbuildinfo
+.env*
+!.env.example
+.vscode/
+.idea/
