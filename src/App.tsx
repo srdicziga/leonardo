@@ -16,6 +16,7 @@ import {
   BedDouble,
   Bath,
   Waves,
+  Home,
 } from 'lucide-react';
 import {
   AMENITY_GROUPS,
@@ -814,31 +815,308 @@ const FEATURE_GALLERIES: {
   ],
 ];
 const METRIC_ICONS = [Trees, Maximize2, KeyRound, BedDouble, Bath, Waves];
-const HOUSE1_PHOTOS = [
-  { src: '/images/villa/opt/kitchen.jpg', alt: 'Kuhinja v veliki hiši' },
-  { src: '/images/villa/opt/bedroom.jpg', alt: 'Spalnica v veliki hiši' },
-  { src: '/images/villa/opt/living_room.jpg', alt: 'Dnevni prostor v veliki hiši' },
-  { src: '/images/villa/opt/bathroom.jpg', alt: 'Kopalnica v veliki hiši' },
-  { src: '/images/villa/opt/bedroom_towels.jpg', alt: 'Udobje in pripravljene brisače' },
-  { src: '/images/villa/opt/bedroom_closet.jpg', alt: 'Druga spalnica in garderobni prostor' },
-  { src: '/images/villa/opt/kitchen_appliances.jpg', alt: 'Kavni kotiček in kuhinjski aparati' },
-  { src: '/images/villa/opt/house_entrance.jpg', alt: 'Vhod v glavno hiško' },
-];
-const ESTATE_PHOTOS = [
-  { src: '/images/villa/opt/pool_wide_view.jpg', alt: 'Ogrevan bazen' },
-  { src: '/images/villa/opt/outside_table.jpg', alt: 'Pokrita terasa z mizo' },
-  { src: '/images/villa/opt/olive_trees.jpg', alt: 'Nasad oljk' },
-  { src: '/images/villa/opt/bbq.jpg', alt: 'Zunanji žar na drva' },
-  { src: '/images/villa/opt/kids_table.jpg', alt: 'Otroška mizica s stoli v senci' },
-  { src: '/images/villa/opt/trampoline_and_pool.jpg', alt: 'Družinski raj ob bazenu' },
+const HOUSE1_PHOTOS: Array<{ src: string; alt: Record<Language, string> }> = [
+  {
+    src: '/images/villa/opt/kitchen.jpg',
+    alt: {
+      hr: 'Kuhinja u velikoj kući',
+      sl: 'Kuhinja v veliki hiši',
+      en: 'Kitchen in the main house',
+      de: 'Küche im Haupthaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/bedroom.jpg',
+    alt: {
+      hr: 'Spavaća soba u velikoj kući',
+      sl: 'Spalnica v veliki hiši',
+      en: 'Bedroom in the main house',
+      de: 'Schlafzimmer im Haupthaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/living_room.jpg',
+    alt: {
+      hr: 'Dnevni boravak u velikoj kući',
+      sl: 'Dnevni prostor v veliki hiši',
+      en: 'Living room in the main house',
+      de: 'Wohnbereich im Haupthaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/bathroom.jpg',
+    alt: {
+      hr: 'Kupaonica u velikoj kući',
+      sl: 'Kopalnica v veliki hiši',
+      en: 'Bathroom in the main house',
+      de: 'Badezimmer im Haupthaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/bedroom_towels.jpg',
+    alt: {
+      hr: 'Udobnost i pripremljeni ručnici',
+      sl: 'Udobje in pripravljene brisače',
+      en: 'Comfort and fresh towels prepared',
+      de: 'Komfort und frische Handtücher',
+    },
+  },
+  {
+    src: '/images/villa/opt/bedroom_closet.jpg',
+    alt: {
+      hr: 'Druga spavaća soba i garderoba',
+      sl: 'Druga spalnica in garderobni prostor',
+      en: 'Second bedroom and wardrobe space',
+      de: 'Zweites Schlafzimmer & Kleiderschrank',
+    },
+  },
+  {
+    src: '/images/villa/opt/kitchen_appliances.jpg',
+    alt: {
+      hr: 'Kutak za kavu i kuhinjski aparati',
+      sl: 'Kavni kotiček in kuhinjski aparati',
+      en: 'Coffee corner and kitchen appliances',
+      de: 'Kaffeeecke & Küchengeräte',
+    },
+  },
+  {
+    src: '/images/villa/opt/house_entrance.jpg',
+    alt: {
+      hr: 'Ulaz u glavnu kuću',
+      sl: 'Vhod v glavno hiško',
+      en: 'Entrance to the main house',
+      de: 'Eingang zum Haupthaus',
+    },
+  },
 ];
 
-const HOUSE2_PHOTOS = [
-  { src: '/images/villa/opt/small_house.jpg', alt: 'Notranjost manjše hiške' },
-  { src: '/images/villa/opt/small_house_bed.jpg', alt: 'Spalnica v manjši hiški' },
-  { src: '/images/villa/opt/small_house_bathroom.jpg', alt: 'Kopalnica v manjši hiški' },
-  { src: '/images/villa/opt/terrace.jpg', alt: 'Terasa in vrt ob manjši hiški' },
+const ESTATE_PHOTOS: Array<{ src: string; alt: Record<Language, string> }> = [
+  {
+    src: '/images/villa/opt/pool_wide_view.jpg',
+    alt: {
+      hr: 'Grijani bazen',
+      sl: 'Ogrevan bazen',
+      en: 'Heated pool',
+      de: 'Beheizter Pool',
+    },
+  },
+  {
+    src: '/images/villa/opt/outside_table.jpg',
+    alt: {
+      hr: 'Natkrivena terasa sa stolom',
+      sl: 'Pokrita terasa z mizo',
+      en: 'Covered dining terrace',
+      de: 'Überdachte Terrasse mit Esstisch',
+    },
+  },
+  {
+    src: '/images/villa/opt/olive_trees.jpg',
+    alt: {
+      hr: 'Maslinik',
+      sl: 'Nasad oljk',
+      en: 'Olive grove',
+      de: 'Olivenhain',
+    },
+  },
+  {
+    src: '/images/villa/opt/bbq.jpg',
+    alt: {
+      hr: 'Vanjski roštilj na drva',
+      sl: 'Zunanji žar na drva',
+      en: 'Outdoor wood-fired grill',
+      de: 'Außengrill mit Holzfeuer',
+    },
+  },
+  {
+    src: '/images/villa/opt/kids_table.jpg',
+    alt: {
+      hr: 'Dječji stolić sa stolicama u hladu',
+      sl: 'Otroška mizica s stoli v senci',
+      en: 'Shaded children’s table and chairs',
+      de: 'Kindertisch mit Stühlen im Schatten',
+    },
+  },
+  {
+    src: '/images/villa/opt/trampoline_and_pool.jpg',
+    alt: {
+      hr: 'Obiteljski raj uz bazen',
+      sl: 'Družinski raj ob bazenu',
+      en: 'Family haven by the pool',
+      de: 'Familienparadies am Pool',
+    },
+  },
 ];
+
+const HOUSE2_PHOTOS: Array<{ src: string; alt: Record<Language, string> }> = [
+  {
+    src: '/images/villa/opt/small_house.jpg',
+    alt: {
+      hr: 'Unutrašnjost manje kućice',
+      sl: 'Notranjost manjše hiške',
+      en: 'Interior of the smaller house',
+      de: 'Innenbereich des kleinen Gästehauses',
+    },
+  },
+  {
+    src: '/images/villa/opt/small_house_bed.jpg',
+    alt: {
+      hr: 'Spavaća soba u manjoj kućici',
+      sl: 'Spalnica v manjši hiški',
+      en: 'Bedroom in the smaller house',
+      de: 'Schlafzimmer im kleinen Gästehaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/small_house_bathroom.jpg',
+    alt: {
+      hr: 'Kupaonica u manjoj kućici',
+      sl: 'Kopalnica v manjši hiški',
+      en: 'Bathroom in the smaller house',
+      de: 'Badezimmer im kleinen Gästehaus',
+    },
+  },
+  {
+    src: '/images/villa/opt/terrace.jpg',
+    alt: {
+      hr: 'Terasa i vrt uz manju kućicu',
+      sl: 'Terasa in vrt ob manjši hiški',
+      en: 'Terrace and garden beside the smaller house',
+      de: 'Terrasse & Garten beim kleinen Gästehaus',
+    },
+  },
+];
+
+const HOUSE_TAB_DETAILS: Record<
+  'house1' | 'house2' | 'estate',
+  Record<Language, { description: string; specs: Array<{ label: string; value: string }> }>
+> = {
+  house1: {
+    hr: {
+      description:
+        'Glavna kuća nudi dvije udobne spavaće sobe sa sjenilima za zamračivanje i komarnicima, potpuno opremljenu kuhinju (perilica posuđa, električni štednjak, pećnica, veliki hladnjak sa zamrzivačem, aparat za kavu, kuhalo za vodu, toster), ugodan dnevni boravak s TV-om te modernu kupaonicu s besplatnom perilicom rublja.',
+      specs: [
+        { label: 'Spavaće sobe', value: '2 odvojene spavaće sobe s ormarima i posteljinom' },
+        { label: 'Kuhinja i dnevni boravak', value: 'Perilica posuđa, pećnica, aparat za kavu, klima' },
+        { label: 'Kupaonica i praonica', value: 'Tuš, perilica rublja, sušilo za kosu, ručnici' },
+        { label: 'Vanjski izlaz', value: 'Izravan izlaz na natkrivenu terasu s roštiljem' },
+      ],
+    },
+    sl: {
+      description:
+        'Glavna hiška ponuja dve udobni spalnici z zatemnitvenimi senčili in komarniki, popolnoma opremljeno kuhinjo (pomivalni stroj, električni štedilnik, pečica, velik hladilnik z zamrzovalnikom, kavni aparat, grelnik vode, toaster), prijeten dnevni prostor s TV-jem ter sodobno kopalnico z brezplačnim pralnim strojem.',
+      specs: [
+        { label: 'Spalnici', value: '2 ločeni spalnici z omarami in posteljnino' },
+        { label: 'Kuhinja & Dnevna soba', value: 'Pomivalni stroj, pečica, kavni aparat, klima' },
+        { label: 'Kopalnica & Pralnica', value: 'Tuš, pralni stroj, sušilnik za lase, brisače' },
+        { label: 'Zunanji izhod', value: 'Neposreden dostop na pokrito teraso z žarom' },
+      ],
+    },
+    en: {
+      description:
+        'The main house features two comfortable bedrooms with room-darkening shades and mosquito nets, a fully equipped kitchen (dishwasher, oven, electric stove, full fridge/freezer, coffee maker, kettle, toaster), a stylish living and dining area with TV, and a modern bathroom with a free washing machine.',
+      specs: [
+        { label: 'Bedrooms', value: '2 separate bedrooms with wardrobes and linens' },
+        { label: 'Kitchen & Living Room', value: 'Dishwasher, oven, coffee maker, A/C' },
+        { label: 'Bathroom & Laundry', value: 'Shower, washing machine, hairdryer, towels' },
+        { label: 'Outdoor Access', value: 'Direct access to the covered terrace with BBQ' },
+      ],
+    },
+    de: {
+      description:
+        'Das Haupthaus bietet zwei gemütliche Schlafzimmer mit Verdunkelungsrollos und Fliegengittern, eine voll ausgestattete Küche (Geschirrspüler, Elektroherd, Backofen, großer Kühl-/Gefrierschrank, Kaffeemaschine, Wasserkocher, Toaster), einen stilvollen Wohn- und Essbereich mit TV sowie ein modernes Bad mit kostenloser Waschmaschine.',
+      specs: [
+        { label: 'Schlafzimmer', value: '2 separate Schlafzimmer mit Schränken & Bettwäsche' },
+        { label: 'Küche & Wohnbereich', value: 'Geschirrspüler, Backofen, Kaffeemaschine, Klima' },
+        { label: 'Bad & Waschmaschine', value: 'Dusche, Waschmaschine, Haartrockner, Handtücher' },
+        { label: 'Terrassenzugang', value: 'Direkter Zugang zur überdachten Grillterrasse' },
+      ],
+    },
+  },
+  house2: {
+    hr: {
+      description:
+        'Druga, manja kućica stoji odvojeno uz bazen i pruža potpunu privatnost za par, starije roditelje ili prijatelje. Uključuje udoban bračni krevet, praktičan kutak s malim hladnjakom, mikrovalnom pećnicom i TV-om te vlastitu modernu kupaonicu s tušem i WC-om.',
+      specs: [
+        { label: 'Spavaći dio', value: 'Udoban bračni krevet, svježa posteljina' },
+        { label: 'Oprema u sobi', value: 'Mali hladnjak, mikrovalna pećnica, TV, Wi-Fi' },
+        { label: 'Vlastita kupaonica', value: 'Privatni tuš, WC, topla voda i ručnici' },
+        { label: 'Položaj', value: 'Korak od grijanog bazena i maslinika' },
+      ],
+    },
+    sl: {
+      description:
+        'Druga, manjša hiška stoji ločeno ob bazenu in nudi popolno zasebnost za par, starejše starše ali prijatelje. Vključuje udobno zakonsko posteljo, priročen kotiček z malim hladilnikom, mikrovalovno pečico in TV-jem ter lastno sodobno kopalnico s tušem in WC-jem.',
+      specs: [
+        { label: 'Spalni del', value: 'Udobna zakonska postelja, sveža posteljnina' },
+        { label: 'Oprema v sobi', value: 'Mali hladilnik, mikrovalovna pečica, TV, Wi-Fi' },
+        { label: 'Lastna kopalnica', value: 'Zasebni tuš, WC, topla voda in brisače' },
+        { label: 'Položaj', value: 'Korak stran od ogrevanega bazena in oljčnika' },
+      ],
+    },
+    en: {
+      description:
+        'The second, smaller house stands separately beside the pool, offering complete privacy for a couple, grandparents, or friends. It includes a comfortable double bed, a convenient kitchenette corner with a mini refrigerator, microwave, and TV, plus its own private bathroom.',
+      specs: [
+        { label: 'Sleeping Area', value: 'Comfortable double bed, fresh linens' },
+        { label: 'In-Room Amenities', value: 'Mini fridge, microwave, TV, Wi-Fi' },
+        { label: 'Private Bathroom', value: 'Private shower, WC, hot water and towels' },
+        { label: 'Location', value: 'Steps away from the heated pool and olive grove' },
+      ],
+    },
+    de: {
+      description:
+        'Das zweite, kleinere Gästehaus steht separat am Pool und bietet volle Privatsphäre für ein Paar, Großeltern oder Freunde. Es verfügt über ein gemütliches Doppelbett, eine praktische Ecke mit Minikühlschrank, Mikrowelle und TV sowie ein eigenes modernes Bad mit Dusche und WC.',
+      specs: [
+        { label: 'Schlafbereich', value: 'Gemütliches Doppelbett, frische Bettwäsche' },
+        { label: 'Ausstattung', value: 'Minikühlschrank, Mikrowelle, TV, WLAN' },
+        { label: 'Eigenes Bad', value: 'Private Dusche, WC, Warmwasser & Handtücher' },
+        { label: 'Lage', value: 'Nur wenige Schritte vom beheizten Pool & Olivenhain' },
+      ],
+    },
+  },
+  estate: {
+    hr: {
+      description:
+        'Središnji dio imanja čini solarno grijani vanjski bazen s ležaljkama, suncobranima i vanjskim tušem. Uz kuću se prostire natkrivena terasa s velikim blagovaonskim stolom i kaminom na drva, a cijelo imanje okružuju masline, smokve, cvjetnjaci te dječje igralište s trampolinom.',
+      specs: [
+        { label: 'Grijani bazen', value: 'Sezonski grijan, ležaljke, suncobrani, vanjski tuš' },
+        { label: 'Natkrivena terasa & BBQ', value: 'Veliki stol, kamin na drva, viseća fotelja' },
+        { label: 'Maslinik', value: 'Mogućnost degustacije domaćeg maslinovog ulja' },
+        { label: 'Natkriveni parking', value: 'Sigurno parkiranje u hladu unutar ograde' },
+      ],
+    },
+    sl: {
+      description:
+        'Osrednji del posestva predstavlja solarno ogrevan zunanji bazen z ležalniki, senčnikoma in zunanjo prho. Ob hiši se razprostira pokrita terasa z veliko jedilno mizo in kaminom na drva, celotno posest pa obdajajo oljke, fige, cvetlične grede ter otroško igrišče s trampolinom.',
+      specs: [
+        { label: 'Ogrevan bazen', value: 'Sezonsko ogrevan, ležalniki, senčnika, zunanji tuš' },
+        { label: 'Pokrita terasa & BBQ', value: 'Velika miza, kamin na drva, viseči počivalnik' },
+        { label: 'Oljčni nasad', value: 'Možnost degustacije domačega oljčnega olja' },
+        { label: 'Pokrito parkirišče', value: 'Varno parkiranje v senci znotraj ograje' },
+      ],
+    },
+    en: {
+      description:
+        'At the heart of the estate lies the solar-heated outdoor pool with sunbeds, umbrellas, and an outdoor shower. Beside the main house is a covered terrace with a large dining table and wood-burning fireplace, surrounded by olive trees, figs, and a children’s play lawn.',
+      specs: [
+        { label: 'Heated Pool', value: 'Seasonally heated, loungers, umbrellas, outdoor shower' },
+        { label: 'Covered Terrace & BBQ', value: 'Large dining table, wood fireplace, hanging chair' },
+        { label: 'Olive Grove', value: 'Homemade Istrian olive oil tasting available' },
+        { label: 'Covered Parking', value: 'Secure shaded parking inside the fenced yard' },
+      ],
+    },
+    de: {
+      description:
+        'Herzstück des Anwesens ist der solarbeheizte Außenpool mit Sonnenliegen, Schirmen und Außendusche. Neben dem Haus erstreckt sich eine überdachte Terrasse mit großem Esstisch und Holzkamin, umgeben von Olivenbäumen, Feigen, Blumenbeeten und einer Spielwiese mit Trampolin.',
+      specs: [
+        { label: 'Beheizter Pool', value: 'Saisonal beheizt, Liegen, Schirme, Außendusche' },
+        { label: 'Terrasse & Grill', value: 'Großer Esstisch, Holzkamin, Hängesessel' },
+        { label: 'Olivenhain', value: 'Verkostung von hausgemachtem Olivenöl möglich' },
+        { label: 'Überdachter Parkplatz', value: 'Sicherer Schattenparkplatz im eingezäunten Hof' },
+      ],
+    },
+  },
+};
 
 const AIRBNB_FEATURED_GALLERY: GalleryItem[] = [
   {
@@ -1126,7 +1404,7 @@ const HOUSE_TAB_KEYS = ['house1', 'house2', 'estate'] as const;
 type HouseTabKey = (typeof HOUSE_TAB_KEYS)[number];
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('sl');
+  const [lang, setLang] = useState<Language>('hr');
   const [heroSlideIdx, setHeroSlideIdx] = useState<number>(0);
   const [activeHouseTab, setActiveHouseTab] = useState<HouseTabKey>('house1');
   const [activeFeatureIdx, setActiveFeatureIdx] = useState<number>(0);
@@ -1457,6 +1735,11 @@ export default function App() {
     []
   );
 
+  // Sync <html lang="..."> attribute with active language
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   // Show Back-to-Top button after scrolling past the hero header
   useEffect(() => {
     const handleScroll = () => {
@@ -1583,7 +1866,7 @@ export default function App() {
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Language Switcher */}
             <div className="inline-flex items-center gap-0.5 p-0.5 sm:p-1 h-8 sm:h-9 bg-[#EFECE4] border border-[#E2DBD0] rounded-lg">
-              {(['sl', 'en', 'de', 'hr'] as Language[]).map((l) => (
+              {(['hr', 'sl', 'en', 'de'] as Language[]).map((l) => (
                 <button
                   key={l}
                   type="button"
@@ -1856,52 +2139,25 @@ export default function App() {
               <MobileEstateUnitCard
                 indexLabel="01 / 03"
                 title={copy.houseTabs.house1}
-                description={
-                  lang === 'sl'
-                    ? 'Glavna hiška ponuja dve udobni spalnici z zatemnitvenimi senčili in komarniki, popolnoma opremljeno kuhinjo (pomivalni stroj, električni štedilnik, pečica, velik hladilnik z zamrzovalnikom, kavni aparat, grelnik vode, toaster), prijeten dnevni prostor s TV-jem ter sodobno kopalnico z brezplačnim pralnim strojem.'
-                    : 'The main house features two comfortable bedrooms with room-darkening shades and mosquito nets, a fully equipped kitchen (dishwasher, oven, electric stove, full fridge/freezer, coffee maker, kettle, toaster), a stylish living and dining area with TV, and a modern bathroom with a free washing machine.'
-                }
-                specs={[
-                  { label: 'Spalnici', value: '2 ločeni spalnici z omarami in posteljnino' },
-                  { label: 'Kuhinja & Dnevna soba', value: 'Pomivalni stroj, pečica, kavni aparat, klima' },
-                  { label: 'Kopalnica & Pralnica', value: 'Tuš, pralni stroj, sušilnik za lase, brisače' },
-                  { label: 'Zunanji izhod', value: 'Neposreden dostop na pokrito teraso z žarom' },
-                ]}
-                photos={HOUSE1_PHOTOS.slice(0, 4)}
+                description={HOUSE_TAB_DETAILS.house1[lang].description}
+                specs={HOUSE_TAB_DETAILS.house1[lang].specs}
+                photos={HOUSE1_PHOTOS.slice(0, 4).map((p) => ({ src: p.src, alt: p.alt[lang] }))}
               />
 
               <MobileEstateUnitCard
                 indexLabel="02 / 03"
                 title={copy.houseTabs.house2}
-                description={
-                  lang === 'sl'
-                    ? 'Druga, manjša hiška stoji ločeno ob bazenu in nudi popolno zasebnost za par, starejše starše ali prijatelje. Vključuje udobno zakonsko posteljo, priročen kotiček z malim hladilnikom, mikrovalovno pečico in TV-jem ter lastno sodobno kopalnico s tušem in WC-jem.'
-                    : 'The second, smaller house stands separately beside the pool, offering complete privacy for a couple, grandparents, or friends. It includes a comfortable double bed, a convenient kitchenette corner with a mini refrigerator, microwave, and TV, plus its own private bathroom.'
-                }
-                specs={[
-                  { label: 'Spalni del', value: 'Udobna zakonska postelja, sveža posteljnina' },
-                  { label: 'Oprema v sobi', value: 'Mali hladilnik, mikrovalovna pečica, TV, Wi-Fi' },
-                  { label: 'Lastna kopalnica', value: 'Zasebni tuš, WC, topla voda in brisače' },
-                  { label: 'Položaj', value: 'Korak stran od ogrevanega bazena in oljčnika' },
-                ]}
-                photos={HOUSE2_PHOTOS}
+                description={HOUSE_TAB_DETAILS.house2[lang].description}
+                specs={HOUSE_TAB_DETAILS.house2[lang].specs}
+                photos={HOUSE2_PHOTOS.map((p) => ({ src: p.src, alt: p.alt[lang] }))}
               />
 
               <MobileEstateUnitCard
                 indexLabel="03 / 03"
                 title={copy.houseTabs.estate}
-                description={
-                  lang === 'sl'
-                    ? 'Osrednji del posestva predstavlja solarno ogrevan zunanji bazen z ležalniki, senčnikoma in zunanjo prho. Ob hiši se razprostira pokrita terasa z veliko jedilno mizo in kaminom na drva, celotno posest pa obdajajo oljke, fige, cvetlične grede ter otroško igrišče s trampolinom.'
-                    : 'At the heart of the estate lies the solar-heated outdoor pool with sunbeds, umbrellas, and an outdoor shower. Beside the main house is a covered terrace with a large dining table and wood-burning fireplace, surrounded by olive trees, figs, and a children’s play lawn.'
-                }
-                specs={[
-                  { label: 'Ogrevan bazen', value: 'Sezonsko ogrevan, ležalniki, senčnika, zunanji tuš' },
-                  { label: 'Pokrita terasa & BBQ', value: 'Velika miza, kamin na drva, viseči počivalnik' },
-                  { label: 'Oljčni nasad', value: 'Možnost degustacije domačega oljčnega olja' },
-                  { label: 'Pokrito parkirišče', value: 'Varno parkiranje v senci znotraj ograje' },
-                ]}
-                photos={ESTATE_PHOTOS.slice(0, 4)}
+                description={HOUSE_TAB_DETAILS.estate[lang].description}
+                specs={HOUSE_TAB_DETAILS.estate[lang].specs}
+                photos={ESTATE_PHOTOS.slice(0, 4).map((p) => ({ src: p.src, alt: p.alt[lang] }))}
               />
             </div>
 
@@ -1909,20 +2165,32 @@ export default function App() {
             <div id="houses" className="hidden lg:block bg-[#F4F0E8] border border-[#E2DBD0] rounded-2xl p-6 sm:p-10">
               <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-[#E2DBD0]">
                 <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-[#E8E2D5] border border-[#DDD4C4] rounded-xl">
-                  {HOUSE_TAB_KEYS.map((tabKey) => (
-                    <button
-                      key={tabKey}
-                      type="button"
-                      onClick={() => setActiveHouseTab(tabKey)}
-                      className={`w-full px-5 sm:px-7 py-3 sm:py-3.5 text-sm sm:text-[15px] font-medium rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
-                        activeHouseTab === tabKey
-                          ? 'bg-[#FAF8F4] text-[#1E251F] shadow-[0_4px_14px_rgba(30,37,31,0.08)] border border-[#DDD4C4]/80'
-                          : 'text-[#4E574C] hover:text-[#1E251F] hover:bg-[#FAF8F4]/45 border border-transparent'
-                      }`}
-                    >
-                      {copy.houseTabs[tabKey]}
-                    </button>
-                  ))}
+                  {HOUSE_TAB_KEYS.map((tabKey) => {
+                    const TabIcon =
+                      tabKey === 'house1' ? Home : tabKey === 'house2' ? BedDouble : Waves;
+                    const isActive = activeHouseTab === tabKey;
+                    return (
+                      <button
+                        key={tabKey}
+                        type="button"
+                        onClick={() => setActiveHouseTab(tabKey)}
+                        className={`w-full inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-3 sm:py-3.5 text-sm sm:text-[15px] font-medium rounded-lg transition-all text-center whitespace-nowrap cursor-pointer ${
+                          isActive
+                            ? 'bg-[#FAF8F4] text-[#1E251F] shadow-[0_4px_14px_rgba(30,37,31,0.08)] border border-[#DDD4C4]/80'
+                            : 'text-[#4E574C] hover:text-[#1E251F] hover:bg-[#FAF8F4]/45 border border-transparent'
+                        }`}
+                      >
+                        <TabIcon
+                          className={`w-4 h-4 shrink-0 transition-colors ${
+                            isActive ? 'text-[#3A4F37]' : 'text-[#6B7466]'
+                          }`}
+                          strokeWidth={1.75}
+                          aria-hidden="true"
+                        />
+                        <span>{copy.houseTabs[tabKey]}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1934,35 +2202,23 @@ export default function App() {
                         {copy.houseTabs.house1}
                       </h3>
                       <p className="mt-3 text-sm sm:text-base text-[#4A5348] leading-relaxed">
-                        {lang === 'sl'
-                          ? 'Glavna hiška ponuja dve udobni spalnici z zatemnitvenimi senčili in komarniki, popolnoma opremljeno kuhinjo (pomivalni stroj, električni štedilnik, pečica, velik hladilnik z zamrzovalnikom, kavni aparat, grelnik vode, toaster), prijeten dnevni prostor s TV-jem ter sodobno kopalnico z brezplačnim pralnim strojem.'
-                          : 'The main house features two comfortable bedrooms with room-darkening shades and mosquito nets, a fully equipped kitchen (dishwasher, oven, electric stove, full fridge/freezer, coffee maker, kettle, toaster), a stylish living and dining area with TV, and a modern bathroom with a free washing machine.'}
+                        {HOUSE_TAB_DETAILS.house1[lang].description}
                       </p>
                     </div>
 
                     <div className="pt-4 border-t border-[#E2DBD0] grid grid-cols-2 gap-4 text-xs text-[#3D463B]">
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Spalnici</div>
-                        <div className="mt-0.5 text-[#5C645A]">2 ločeni spalnici z omarami in posteljnino</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Kuhinja & Dnevna soba</div>
-                        <div className="mt-0.5 text-[#5C645A]">Pomivalni stroj, pečica, kavni aparat, klima</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Kopalnica & Pralnica</div>
-                        <div className="mt-0.5 text-[#5C645A]">Tuš, pralni stroj, sušilnik za lase, brisače</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Zunanji izhod</div>
-                        <div className="mt-0.5 text-[#5C645A]">Neposreden dostop na pokrito teraso z žarom</div>
-                      </div>
+                      {HOUSE_TAB_DETAILS.house1[lang].specs.map((spec) => (
+                        <div key={spec.label}>
+                          <div className="font-semibold text-[#1E251F]">{spec.label}</div>
+                          <div className="mt-0.5 text-[#5C645A]">{spec.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   <div className="lg:col-span-7 grid grid-cols-2 gap-4">
                     {HOUSE1_PHOTOS.slice(0, 4).map((photo) => (
-                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt} />
+                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt[lang]} />
                     ))}
                   </div>
                 </div>
@@ -1976,35 +2232,23 @@ export default function App() {
                         {copy.houseTabs.house2}
                       </h3>
                       <p className="mt-3 text-sm sm:text-base text-[#4A5348] leading-relaxed">
-                        {lang === 'sl'
-                          ? 'Druga, manjša hiška stoji ločeno ob bazenu in nudi popolno zasebnost za par, starejše starše ali prijatelje. Vključuje udobno zakonsko posteljo, priročen kotiček z malim hladilnikom, mikrovalovno pečico in TV-jem ter lastno sodobno kopalnico s tušem in WC-jem.'
-                          : 'The second, smaller house stands separately beside the pool, offering complete privacy for a couple, grandparents, or friends. It includes a comfortable double bed, a convenient kitchenette corner with a mini refrigerator, microwave, and TV, plus its own private bathroom.'}
+                        {HOUSE_TAB_DETAILS.house2[lang].description}
                       </p>
                     </div>
 
                     <div className="pt-4 border-t border-[#E2DBD0] grid grid-cols-2 gap-4 text-xs text-[#3D463B]">
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Spalni del</div>
-                        <div className="mt-0.5 text-[#5C645A]">Udobna zakonska postelja, sveža posteljnina</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Oprema v sobi</div>
-                        <div className="mt-0.5 text-[#5C645A]">Mali hladilnik, mikrovalovna pečica, TV, Wi-Fi</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Lastna kopalnica</div>
-                        <div className="mt-0.5 text-[#5C645A]">Zasebni tuš, WC, topla voda in brisače</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Položaj</div>
-                        <div className="mt-0.5 text-[#5C645A]">Korak stran od ogrevanega bazena in oljčnika</div>
-                      </div>
+                      {HOUSE_TAB_DETAILS.house2[lang].specs.map((spec) => (
+                        <div key={spec.label}>
+                          <div className="font-semibold text-[#1E251F]">{spec.label}</div>
+                          <div className="mt-0.5 text-[#5C645A]">{spec.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   <div className="lg:col-span-7 grid grid-cols-2 gap-4">
                     {HOUSE2_PHOTOS.map((photo) => (
-                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt} />
+                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt[lang]} />
                     ))}
                   </div>
                 </div>
@@ -2018,35 +2262,23 @@ export default function App() {
                         {copy.houseTabs.estate}
                       </h3>
                       <p className="mt-3 text-sm sm:text-base text-[#4A5348] leading-relaxed">
-                        {lang === 'sl'
-                          ? 'Osrednji del posestva predstavlja solarno ogrevan zunanji bazen z ležalniki, senčnikoma in zunanjo prho. Ob hiši se razprostira pokrita terasa z veliko jedilno mizo in kaminom na drva, celotno posest pa obdajajo oljke, fige, cvetlične grede ter otroško igrišče s trampolinom.'
-                          : 'At the heart of the estate lies the solar-heated outdoor pool with sunbeds, umbrellas, and an outdoor shower. Beside the main house is a covered terrace with a large dining table and wood-burning fireplace, surrounded by olive trees, figs, and a children’s play lawn.'}
+                        {HOUSE_TAB_DETAILS.estate[lang].description}
                       </p>
                     </div>
 
                     <div className="pt-4 border-t border-[#E2DBD0] grid grid-cols-2 gap-4 text-xs text-[#3D463B]">
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Ogrevan bazen</div>
-                        <div className="mt-0.5 text-[#5C645A]">Sezonsko ogrevan, ležalniki, senčnika, zunanji tuš</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Pokrita terasa & BBQ</div>
-                        <div className="mt-0.5 text-[#5C645A]">Velika miza, kamin na drva, viseči počivalnik</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Oljčni nasad</div>
-                        <div className="mt-0.5 text-[#5C645A]">Možnost degustacije domačega oljčnega olja</div>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#1E251F]">Pokrito parkirišče</div>
-                        <div className="mt-0.5 text-[#5C645A]">Varno parkiranje v senci znotraj ograje</div>
-                      </div>
+                      {HOUSE_TAB_DETAILS.estate[lang].specs.map((spec) => (
+                        <div key={spec.label}>
+                          <div className="font-semibold text-[#1E251F]">{spec.label}</div>
+                          <div className="mt-0.5 text-[#5C645A]">{spec.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   <div className="lg:col-span-7 grid grid-cols-2 gap-4">
                     {ESTATE_PHOTOS.slice(0, 4).map((photo) => (
-                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt} />
+                      <EstatePhotoCard key={photo.src} src={photo.src} alt={photo.alt[lang]} />
                     ))}
                   </div>
                 </div>
@@ -2537,13 +2769,29 @@ export default function App() {
 
                 <div className="pt-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 flex-1 content-center">
                   <div>
-                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">Lokacija / Naslov</div>
+                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">
+                      {lang === 'hr'
+                        ? 'Lokacija / Adresa'
+                        : lang === 'en'
+                          ? 'Location / Address'
+                          : lang === 'de'
+                            ? 'Lage / Adresse'
+                            : 'Lokacija / Naslov'}
+                    </div>
                     <div className="mt-1.5 text-sm sm:text-[15px] font-medium text-[#1E251F]">
                       Paolija 16a, 52466 Bužinija
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">Center Novigrada</div>
+                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">
+                      {lang === 'hr'
+                        ? 'Centar Novigrada'
+                        : lang === 'en'
+                          ? 'Novigrad Centre'
+                          : lang === 'de'
+                            ? 'Zentrum Novigrad'
+                            : 'Center Novigrada'}
+                    </div>
                     <div className="mt-1.5 font-mono text-sm sm:text-[15px] font-medium text-[#1E251F] tabular-nums">
                       2,5 km
                     </div>
@@ -2555,7 +2803,15 @@ export default function App() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">Srednjeveški Motovun</div>
+                    <div className="text-xs uppercase tracking-[0.12em] text-[#787F75]">
+                      {lang === 'hr'
+                        ? 'Srednjovjekovni Motovun'
+                        : lang === 'en'
+                          ? 'Medieval Motovun'
+                          : lang === 'de'
+                            ? 'Mittelalterliches Motovun'
+                            : 'Srednjeveški Motovun'}
+                    </div>
                     <div className="mt-1.5 font-mono text-sm sm:text-[15px] font-medium text-[#1E251F] tabular-nums">
                       28 km (25 min)
                     </div>
@@ -2837,7 +3093,7 @@ export default function App() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              {(['sl', 'en', 'de', 'hr'] as Language[]).map((l) => (
+              {(['hr', 'sl', 'en', 'de'] as Language[]).map((l) => (
                 <button
                   key={l}
                   type="button"

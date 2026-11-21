@@ -11,7 +11,7 @@ import {
 import { MapPin, Navigation, Layers, Loader2 } from 'lucide-react';
 import { CONTACT_INFO, Language } from '../data/villaData';
 
-const LEONARDO_COORDS = { lat: 45.3292, lng: 13.5864 };
+const LEONARDO_COORDS = { lat: 45.336938, lng: 13.588688 }; // Plus Code: 8FQM8HPQ+QF (8HPQ+QF Bužinija, Hrvaška)
 
 const GOOGLE_MAPS_DIRECT_URL = `https://www.google.com/maps/search/?api=1&query=${LEONARDO_COORDS.lat},${LEONARDO_COORDS.lng}`;
 const GOOGLE_MAPS_DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${LEONARDO_COORDS.lat},${LEONARDO_COORDS.lng}`;
@@ -245,17 +245,17 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
   return (
     <div ref={mapHostRef} className="mt-6 pt-6 border-t border-[#E5DFD3]">
       {/* Compact Map Controls Row */}
-      <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-end gap-2.5 sm:gap-2 mb-3">
         {apiKey && !hasQuotaError && (
           <div
             role="group"
             aria-label={t.sectionTitle}
-            className="inline-flex items-center p-0.5 rounded-lg bg-[#EFECE4] border border-[#DFD7C8]"
+            className="grid grid-cols-2 sm:inline-flex w-full sm:w-auto items-center p-1 sm:p-0.5 rounded-xl sm:rounded-lg bg-[#EFECE4] border border-[#DFD7C8]"
           >
             <button
               type="button"
               onClick={() => setMapTypeId('roadmap')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center justify-center px-3 sm:px-2.5 py-2 sm:py-1 rounded-lg sm:rounded-md text-xs sm:text-[11px] font-medium transition-colors cursor-pointer ${
                 mapTypeId === 'roadmap'
                   ? 'bg-[#FAF8F4] text-[#1E251F] shadow-xs'
                   : 'text-[#5C645A] hover:text-[#1E251F]'
@@ -266,13 +266,13 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
             <button
               type="button"
               onClick={() => setMapTypeId('hybrid')}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center justify-center gap-1.5 sm:gap-1 px-3 sm:px-2.5 py-2 sm:py-1 rounded-lg sm:rounded-md text-xs sm:text-[11px] font-medium transition-colors cursor-pointer ${
                 mapTypeId === 'hybrid'
                   ? 'bg-[#FAF8F4] text-[#1E251F] shadow-xs'
                   : 'text-[#5C645A] hover:text-[#1E251F]'
               }`}
             >
-              <Layers className="w-3 h-3" />
+              <Layers className="w-3.5 h-3.5 sm:w-3 sm:h-3 shrink-0" />
               <span>{t.satelliteView}</span>
             </button>
           </div>
@@ -282,9 +282,9 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
           href={GOOGLE_MAPS_DIRECTIONS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D5CDBE] bg-[#EFECE4] hover:bg-[#3A4F37] text-[#1E251F] hover:text-[#FAF8F4] hover:border-[#3A4F37] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 sm:gap-1.5 px-4 sm:px-3 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg border border-[#D5CDBE] bg-[#EFECE4] hover:bg-[#3A4F37] text-[#1E251F] hover:text-[#FAF8F4] hover:border-[#3A4F37] text-xs font-medium transition-colors whitespace-nowrap shrink-0"
         >
-          <Navigation className="w-3.5 h-3.5" />
+          <Navigation className="w-3.5 h-3.5 shrink-0" />
           <span>{t.directionsBtn}</span>
         </a>
       </div>
