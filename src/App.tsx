@@ -1420,7 +1420,6 @@ export default function App() {
   const [legalModal, setLegalModal] = useState<'privacy' | 'cookies' | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [showBackToTop, setShowBackToTop] = useState<boolean>(false);
-  const [mapsQuotaExceeded, setMapsQuotaExceeded] = useState<boolean>(false);
   const heroRef = useRef<HTMLElement | null>(null);
   const featureSliderRef = useRef<HTMLDivElement | null>(null);
   const [featureCanScrollPrev, setFeatureCanScrollPrev] = useState<boolean>(false);
@@ -1761,13 +1760,6 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Listen for Google Maps Platform quota exhaustion event
-  useEffect(() => {
-    const handleQuotaExceeded = () => setMapsQuotaExceeded(true);
-    window.addEventListener('gmp-quota-exceeded', handleQuotaExceeded);
-    return () => window.removeEventListener('gmp-quota-exceeded', handleQuotaExceeded);
-  }, []);
-
   // Keyboard navigation for Lightbox & Mobile Menu
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1798,22 +1790,6 @@ export default function App() {
 
   return (
     <div id="top" className="min-h-screen flex flex-col bg-[#FAF8F4] text-[#1E251F] overflow-x-clip">
-      {mapsQuotaExceeded && (
-        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-xs md:text-sm text-center sticky top-0 z-50 shadow-sm">
-          <span>
-            Google Maps Platform quota reached. If you are the app owner, visit{' '}
-            <a
-              href="https://developers.google.com/maps/ai/ai-studio?utm_campaign=gmp_mcp_codeassist_v1_aistudio#quota_exceeded_errors"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-semibold text-amber-950 hover:text-amber-800"
-            >
-              maps developer site
-            </a>{' '}
-            for instructions to update your account.
-          </span>
-        </div>
-      )}
       {/* TOP BAR CONTRACT: Strictly 3 zones */}
       <header className="sticky top-0 z-40 bg-[#FAF8F4]/[0.97] border-b border-[#E5DFD3]">
         <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 px-3.5 sm:px-6 lg:px-10 py-2 sm:py-2.5">

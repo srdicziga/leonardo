@@ -33,12 +33,16 @@ jobs:
         run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Build production dist
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
         run: npm run build
 
       - name: Remove server bundle artifact
         run: rm -f server.js
 
       - name: Commit dist folder to GitHub
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

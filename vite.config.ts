@@ -18,8 +18,8 @@ export default defineConfig(({command, mode}) => {
         env.GOOGLE_MAPS_API_KEY ||
         process.env.GOOGLE_MAPS_API_KEY ||
         ''
-      : hasLocalEnvFile
-        ? env.VITE_GOOGLE_MAPS_API_KEY || ''
+      : hasLocalEnvFile || process.env.GITHUB_ACTIONS === 'true'
+        ? env.VITE_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || ''
         : '';
 
   return {
