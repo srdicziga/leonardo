@@ -1,21 +1,23 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface OliveBranchScrollBgProps {
   heroRef: React.RefObject<HTMLElement | null>;
 }
 
 /**
- * Dual-Margin Cascading Istrian Olive Canopies (Asymmetric Left & Right) with Wind Physics:
- * - Anchored seamlessly out of both top-left and top-right corners right beneath the sticky header,
- *   graduating from dense shadowed interior volume into varied short, medium, and long sweeping shoots.
- * - Deliberately non-symmetrical: the right canopy uses independent Bezier branch trajectories,
- *   staggered vertical rhythms, unique PRNG seeds, and phase-lagged wind frequencies so the two sides
- *   read as natural neighboring olive trees in the same Istrian grove rather than a mirrored reflection.
- * - Soft horizontal atmospheric masks fade cleanly toward the page center, staying at z-[5] behind modules.
+ * Dual-Margin Cascading Istrian Olive Canopies (Asymmetric Left & Right) — GPU-Composited Edition:
+ * - Preserves the exact asymmetric botanical canopy artwork (tapered wood limbs, lanceolate leaves,
+ *   petioles, midribs, and Istrian olives) across 3 depth layers ('back', 'mid', 'front') per side.
+ * - Pre-rasterizes each depth layer ONCE onto a crisp offscreen-baked <canvas> with its horizontal
+ *   atmospheric fade pre-applied to the alpha channel — eliminating ~7,000 SVG DOM nodes, runtime
+ *   CSS mask-image compositing, and 60fps JS/SVG layout thrashing.
+ * - Gentle multi-depth Mediterranean breeze runs purely on the GPU compositor via CSS transforms
+ *   and pauses automatically when off-screen or when the browser tab is hidden.
  */
 
 type Pt = [number, number];
 type LeafTone = 'shadow' | 'olive' | 'sunlit' | 'silver';
+type CanopyDepth = 'back' | 'mid' | 'front';
 
 interface CanopyLeaf {
   x: number;
@@ -37,7 +39,7 @@ interface CanopyOlive {
 }
 
 interface CanopyTwig {
-  pathD: string;
+  pts: [Pt, Pt, Pt, Pt];
   strokeWidth: number;
   strokeColor: string;
   leaves: CanopyLeaf[];
@@ -46,17 +48,14 @@ interface CanopyTwig {
 
 interface WindBoughCluster {
   id: string;
-  layer: 'back' | 'mid' | 'front';
-  pivotX: number;
-  pivotY: number;
-  swayAmp: number;
-  windFreq: number;
-  phase: number;
-  scrollSensitivity: number;
-  woodPaths: Array<{ d: string; color: string }>;
+  layer: CanopyDepth;
+  woodPaths: Array<{ leftPts: Pt[]; rightPts: Pt[]; color: string }>;
   twigs: CanopyTwig[];
   clusterOpacity: number;
 }
+
+const VIEW_W = 540;
+const VIEW_H = 900;
 
 /** Deterministic PRNG for organic, non-repetitive botanical placement */
 function createRng(seed: number) {
@@ -91,17 +90,17 @@ function sampleCubic(
     6 * u * t * (p2[1] - p1[1]) +
     3 * tt * (p3[1] - p2[1]);
 
-  return { x, y, angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+  return { x, y, angle: Math.atan2(dy, dx) };
 }
 
-/** Builds a smooth tapered woody branch silhouette along a cubic Bezier spline */
-function buildTaperedCubicBranch(
+/** Builds tapered woody branch polygon points along a cubic Bezier spline */
+function buildTaperedCubicBranchPts(
   pts: [Pt, Pt, Pt, Pt],
   rStart: number,
   rEnd: number
-): string {
+): { leftPts: Pt[]; rightPts: Pt[] } {
   const [p0, p1, p2, p3] = pts;
-  const steps = 16;
+  const steps = 14;
   const leftPts: Pt[] = [];
   const rightPts: Pt[] = [];
 
@@ -130,38 +129,7 @@ function buildTaperedCubicBranch(
     rightPts.push([x - nx * r, y - ny * r]);
   }
 
-  const fwd = leftPts
-    .map((pt, idx) => `${idx === 0 ? 'M' : 'L'} ${pt[0].toFixed(1)},${pt[1].toFixed(1)}`)
-    .join(' ');
-  const bwd = [...rightPts]
-    .reverse()
-    .map((pt) => `L ${pt[0].toFixed(1)},${pt[1].toFixed(1)}`)
-    .join(' ');
-
-  return `${fwd} ${bwd} Z`;
-}
-
-/** Narrow, sharp-graceful lanceolate olive leaf with subtle petiole */
-function buildSlenderOliveLeafD(
-  length: number,
-  width: number,
-  bend: number
-): { bladeD: string; midribD: string; petioleD: string } {
-  const petiole = Math.max(2.0, length * 0.1);
-  const bladeLen = length - petiole;
-  const hw = width * 0.5;
-  const c1x = petiole + bladeLen * 0.26;
-  const c2x = petiole + bladeLen * 0.72;
-
-  const bladeD = [
-    `M ${petiole.toFixed(1)},0`,
-    `C ${c1x.toFixed(1)},${(-hw * 0.92 + bend * 0.24).toFixed(1)} ${c2x.toFixed(1)},${(-hw * 0.68 + bend * 0.76).toFixed(1)} ${length.toFixed(1)},${bend.toFixed(1)}`,
-    `C ${c2x.toFixed(1)},${(hw * 0.68 + bend * 0.76).toFixed(1)} ${c1x.toFixed(1)},${(hw * 0.92 + bend * 0.24).toFixed(1)} ${petiole.toFixed(1)},0 Z`,
-  ].join(' ');
-
-  const midribD = `M ${petiole.toFixed(1)},0 Q ${(petiole + bladeLen * 0.48).toFixed(1)},${(bend * 0.42).toFixed(1)} ${(petiole + bladeLen * 0.85).toFixed(1)},${(bend * 0.82).toFixed(1)}`;
-  const petioleD = `M 0,0 L ${(petiole + 0.8).toFixed(1)},0`;
-  return { bladeD, midribD, petioleD };
+  return { leftPts, rightPts };
 }
 
 /** Populates a cubic Bezier shoot with rich, direction-aware Olea europaea leaves and optional olive clusters */
@@ -169,7 +137,7 @@ function populateCubicTwig(opts: {
   pts: [Pt, Pt, Pt, Pt];
   nodes: number;
   leafScale: number;
-  layer: 'back' | 'mid' | 'front';
+  layer: CanopyDepth;
   seed: number;
   withOlives?: boolean;
   strokeWidth?: number;
@@ -179,6 +147,7 @@ function populateCubicTwig(opts: {
   const rand = createRng(seed);
   const leaves: CanopyLeaf[] = [];
   const olives: CanopyOlive[] = [];
+  const DEG = Math.PI / 180;
 
   for (let i = 0; i < nodes; i++) {
     const t = 0.08 + (i / Math.max(1, nodes - 1)) * 0.87;
@@ -186,13 +155,12 @@ function populateCubicTwig(opts: {
     const sizeTaper = 1 - t * 0.22;
 
     const angles = [
-      pt.angle - (30 + rand() * 28),
-      pt.angle + (30 + rand() * 28),
-      ...(rand() > 0.42 ? [pt.angle + (rand() - 0.5) * 52] : []),
+      pt.angle - (30 + rand() * 28) * DEG,
+      pt.angle + (30 + rand() * 28) * DEG,
+      ...(rand() > 0.42 ? [pt.angle + (rand() - 0.5) * 52 * DEG] : []),
     ];
 
     angles.forEach((ang, aIdx) => {
-      // Natural mix including foreshortened & narrow spear-like olive leaves
       const length = (23 + rand() * 15) * leafScale * sizeTaper;
       const width = (5.4 + rand() * 2.8) * leafScale * sizeTaper;
       const bend = (rand() - 0.5) * length * 0.18;
@@ -210,7 +178,7 @@ function populateCubicTwig(opts: {
       leaves.push({
         x: pt.x + (rand() - 0.5) * 2.0,
         y: pt.y + (rand() - 0.5) * 2.0,
-        angle: ang + (aIdx === 2 ? (rand() - 0.5) * 20 : 0),
+        angle: ang + (aIdx === 2 ? (rand() - 0.5) * 20 * DEG : 0),
         length,
         width,
         bend,
@@ -224,28 +192,25 @@ function populateCubicTwig(opts: {
         y: pt.y,
         stemDx: (rand() - 0.5) * 7,
         stemDy: 9 + rand() * 5.5,
-        tilt: (rand() - 0.5) * 24,
+        tilt: (rand() - 0.5) * 24 * DEG,
         dark: rand() > 0.64,
       });
     }
   }
 
-  // Apical shoot tip leaf
   const tip = sampleCubic(p0, p1, p2, p3, 1);
   leaves.push({
     x: tip.x,
     y: tip.y,
-    angle: tip.angle + (rand() - 0.5) * 10,
+    angle: tip.angle + (rand() - 0.5) * 10 * DEG,
     length: 24 * leafScale,
     width: 5.8 * leafScale,
     bend: (rand() - 0.5) * 2.5,
     tone: layer === 'back' ? 'olive' : 'sunlit',
   });
 
-  const pathD = `M ${p0[0].toFixed(1)},${p0[1].toFixed(1)} C ${p1[0].toFixed(1)},${p1[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)} ${p3[0].toFixed(1)},${p3[1].toFixed(1)}`;
-
   return {
-    pathD,
+    pts,
     strokeWidth: strokeWidth ?? (layer === 'back' ? 1.85 : layer === 'mid' ? 1.4 : 1.1),
     strokeColor: layer === 'back' ? '#3C4430' : layer === 'mid' ? '#50523E' : '#63684E',
     leaves,
@@ -253,29 +218,17 @@ function populateCubicTwig(opts: {
   };
 }
 
-/**
- * Generates a corner-hugging + far-reaching multi-directional canopy composition:
- * - Top-left corner thoroughly filled via top-edge draping branches + left-edge climbing branches.
- * - Varied shoot lengths (short dense interior tufts -> medium fanning sprigs -> long 380–480px arching limbs).
- * - Varied directions (weeping down, climbing upward, S-curving diagonally, tucking back inward).
- */
 function createCornerCanopyClusters(): WindBoughCluster[] {
   const clusters: WindBoughCluster[] = [];
 
-  // ---------------------------------------------------------------------------
-  // 1. BACK DENSE CORNER & MARGIN VOLUME (Fills top-left corner & inner depth)
-  // ---------------------------------------------------------------------------
   const backDefs: Array<{
     id: string;
-    pivot: Pt;
     limbs: Array<[Pt, Pt, Pt, Pt]>;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number }>;
     seed: number;
-    phase: number;
   }> = [
     {
       id: 'back-corner-crown',
-      pivot: [36, -20],
       limbs: [
         [[18, -24], [32, 36], [88, 72], [176, 86]],
         [[92, -24], [116, 28], [164, 56], [238, 64]],
@@ -289,11 +242,9 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[-18, 86], [54, 108], [126, 124], [198, 116]], nodes: 8 },
       ],
       seed: 101,
-      phase: 0.3,
     },
     {
       id: 'back-upper-wall',
-      pivot: [-24, 245],
       limbs: [
         [[-24, 245], [52, 218], [128, 228], [194, 262]],
         [[-22, 285], [48, 318], [118, 344], [176, 382]],
@@ -305,11 +256,9 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[-14, 336], [56, 342], [118, 332], [186, 308]], nodes: 7 },
       ],
       seed: 202,
-      phase: 1.5,
     },
     {
       id: 'back-mid-wall',
-      pivot: [-24, 468],
       limbs: [
         [[-24, 468], [46, 444], [112, 458], [168, 496]],
         [[-22, 512], [44, 548], [102, 578], [148, 618]],
@@ -320,36 +269,25 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[-12, 526], [54, 544], [104, 576], [142, 622]], nodes: 7 },
       ],
       seed: 303,
-      phase: 2.7,
     },
     {
       id: 'back-lower-wall',
-      pivot: [-22, 695],
-      limbs: [
-        [[-22, 695], [38, 672], [94, 684], [138, 720]],
-      ],
+      limbs: [[[-22, 695], [38, 672], [94, 684], [138, 720]]],
       twigs: [
         { pts: [[-10, 646], [46, 636], [96, 654], [138, 688]], nodes: 6 },
         { pts: [[8, 692], [62, 698], [108, 722], [142, 762]], nodes: 6 },
         { pts: [[-14, 746], [36, 764], [78, 796], [108, 842]], nodes: 6 },
       ],
       seed: 404,
-      phase: 3.9,
     },
   ];
 
-  backDefs.forEach((bd, idx) => {
+  backDefs.forEach((bd) => {
     clusters.push({
       id: bd.id,
       layer: 'back',
-      pivotX: bd.pivot[0],
-      pivotY: bd.pivot[1],
-      swayAmp: 0.72,
-      windFreq: 0.66 + idx * 0.06,
-      phase: bd.phase,
-      scrollSensitivity: 0.25,
       woodPaths: bd.limbs.map((pts) => ({
-        d: buildTaperedCubicBranch(pts, 4.0, 1.35),
+        ...buildTaperedCubicBranchPts(pts, 4.0, 1.35),
         color: '#3C422F',
       })),
       twigs: bd.twigs.map((tw, tIdx) =>
@@ -365,38 +303,25 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // 2. MID-CANOPY MULTI-DIRECTIONAL BOUGHS (Draping corner, arching up, weeping down, curling back)
-  // ---------------------------------------------------------------------------
   const midDefs: Array<{
     id: string;
-    pivot: Pt;
     limbs: Array<[Pt, Pt, Pt, Pt]>;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number; leafScale?: number }>;
     seed: number;
-    phase: number;
-    freq: number;
   }> = [
-    // Top-border draping corner bough (hangs naturally straight down & right from header edge)
     {
       id: 'mid-top-drape',
-      pivot: [168, -20],
       limbs: [[[168, -20], [186, 28], [228, 64], [294, 78]]],
       twigs: [
         { pts: [[176, 8], [186, 62], [202, 114], [228, 162]], nodes: 7 },
         { pts: [[204, 42], [244, 24], [292, 22], [352, 34]], nodes: 8 },
         { pts: [[228, 62], [278, 72], [326, 98], [364, 134]], nodes: 7 },
-        // Short inward-tucking counter twig for wild realism
         { pts: [[182, 26], [148, 52], [116, 64], [86, 62]], nodes: 5, leafScale: 0.88 },
       ],
       seed: 511,
-      phase: 0.7,
-      freq: 0.94,
     },
-    // Top-left deep corner cluster bridging corner diagonally
     {
       id: 'mid-corner-diag',
-      pivot: [-16, 56],
       limbs: [[[-16, 56], [48, 38], [114, 52], [178, 92]]],
       twigs: [
         { pts: [[18, 46], [62, 12], [112, -2], [164, 4]], nodes: 6, leafScale: 0.9 },
@@ -404,29 +329,20 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[44, 46], [76, 98], [94, 152], [102, 208]], nodes: 7 },
       ],
       seed: 547,
-      phase: 1.2,
-      freq: 0.88,
     },
-    // Upper-mid ascending + drooping split bough
     {
       id: 'mid-upper-split',
-      pivot: [-18, 204],
       limbs: [[[-18, 204], [64, 178], [156, 174], [246, 198]]],
       twigs: [
         { pts: [[34, 188], [98, 144], [168, 118], [242, 108]], nodes: 8 },
         { pts: [[112, 172], [178, 182], [238, 212], [286, 256]], nodes: 8 },
         { pts: [[76, 178], [106, 224], [122, 268], [128, 308]], nodes: 6, leafScale: 0.9 },
-        // Short crisp inward shoot
         { pts: [[148, 176], [134, 146], [112, 124], [86, 114]], nodes: 4, leafScale: 0.84 },
       ],
       seed: 612,
-      phase: 2.0,
-      freq: 0.9,
     },
-    // Middle sweeping S-curve bough
     {
       id: 'mid-center-sweep',
-      pivot: [-18, 354],
       limbs: [[[-18, 354], [64, 338], [152, 358], [232, 342]]],
       twigs: [
         { pts: [[40, 344], [102, 304], [168, 286], [236, 284]], nodes: 8 },
@@ -434,13 +350,9 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[56, 346], [88, 396], [104, 444], [112, 488]], nodes: 6, leafScale: 0.9 },
       ],
       seed: 713,
-      phase: 3.1,
-      freq: 0.86,
     },
-    // Lower-mid weeping & upward counter-arch
     {
       id: 'mid-lower-arch',
-      pivot: [-18, 514],
       limbs: [[[-18, 514], [58, 496], [134, 512], [202, 548]]],
       twigs: [
         { pts: [[34, 502], [92, 464], [154, 446], [218, 444]], nodes: 7 },
@@ -448,13 +360,9 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[48, 506], [72, 558], [84, 604], [86, 646]], nodes: 5, leafScale: 0.88 },
       ],
       seed: 814,
-      phase: 4.3,
-      freq: 0.92,
     },
-    // Bottom cascading feather bough
     {
       id: 'mid-bottom-cascade',
-      pivot: [-16, 686],
       limbs: [[[-16, 686], [48, 672], [108, 692], [158, 728]]],
       twigs: [
         { pts: [[26, 678], [76, 646], [128, 632], [182, 634]], nodes: 6 },
@@ -462,8 +370,6 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[28, 684], [48, 738], [58, 788], [60, 834]], nodes: 5, leafScale: 0.86 },
       ],
       seed: 915,
-      phase: 5.2,
-      freq: 0.84,
     },
   ];
 
@@ -471,14 +377,8 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
     clusters.push({
       id: md.id,
       layer: 'mid',
-      pivotX: md.pivot[0],
-      pivotY: md.pivot[1],
-      swayAmp: 1.35,
-      windFreq: md.freq,
-      phase: md.phase,
-      scrollSensitivity: 0.55,
       woodPaths: md.limbs.map((pts) => ({
-        d: buildTaperedCubicBranch(pts, 3.1, 1.0),
+        ...buildTaperedCubicBranchPts(pts, 3.1, 1.0),
         color: '#4F4C3A',
       })),
       twigs: md.twigs.map((tw, tIdx) =>
@@ -495,100 +395,62 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // 3. FRONT VARIED-LENGTH SHOOTS (Short, medium & long expressive sky-reaching shoots in diverse angles)
-  // ---------------------------------------------------------------------------
   const frontDefs: Array<{
     id: string;
-    pivot: Pt;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number; leafScale: number }>;
     seed: number;
-    phase: number;
-    freq: number;
-    amp: number;
   }> = [
-    // Long sweeping top-corner branch reaching across upper sky + hanging sub-twig
     {
       id: 'front-long-corner',
-      pivot: [255, -14],
       twigs: [
         { pts: [[255, -14], [312, 22], [388, 32], [472, 16]], nodes: 10, leafScale: 0.92 },
         { pts: [[292, 12], [344, 46], [392, 88], [428, 138]], nodes: 7, leafScale: 0.88 },
         { pts: [[268, 2], [252, 48], [256, 94], [274, 134]], nodes: 5, leafScale: 0.84 },
       ],
       seed: 1111,
-      phase: 0.9,
-      freq: 1.24,
-      amp: 2.35,
     },
-    // Long dramatic S-curved upper shoot (stretches far to x=495) + upward fork
     {
       id: 'front-long-upper',
-      pivot: [164, 118],
       twigs: [
         { pts: [[164, 118], [268, 146], [382, 124], [492, 86]], nodes: 11, leafScale: 0.94 },
         { pts: [[282, 138], [344, 168], [398, 206], [434, 252]], nodes: 7, leafScale: 0.86 },
-        // Short playful upward sprig mid-branch
         { pts: [[224, 136], [242, 102], [268, 78], [296, 66]], nodes: 4, leafScale: 0.82 },
       ],
       seed: 1212,
-      phase: 2.1,
-      freq: 1.32,
-      amp: 2.75,
     },
-    // Expressive arching & drooping mid-upper shoot (x -> 455)
     {
       id: 'front-mid-reach',
-      pivot: [152, 266],
       twigs: [
         { pts: [[152, 266], [248, 242], [354, 268], [452, 306]], nodes: 10, leafScale: 0.9 },
         { pts: [[262, 250], [324, 224], [386, 208], [438, 208]], nodes: 6, leafScale: 0.86 },
         { pts: [[202, 254], [218, 298], [224, 342], [218, 384]], nodes: 5, leafScale: 0.82 },
       ],
       seed: 1313,
-      phase: 3.4,
-      freq: 1.18,
-      amp: 2.45,
     },
-    // Medium-long graceful S-curve sweeping upward from middle canopy (x -> 395)
     {
       id: 'front-mid-upward',
-      pivot: [138, 434],
       twigs: [
         { pts: [[138, 434], [218, 444], [308, 412], [392, 368]], nodes: 9, leafScale: 0.88 },
         { pts: [[228, 434], [286, 456], [336, 488], [372, 526]], nodes: 6, leafScale: 0.84 },
       ],
       seed: 1414,
-      phase: 4.5,
-      freq: 1.28,
-      amp: 2.35,
     },
-    // Short + medium-long weeping shoots on lower canopy (x -> 318 & weeping down)
     {
       id: 'front-lower-weep',
-      pivot: [108, 594],
       twigs: [
         { pts: [[108, 594], [182, 578], [254, 592], [318, 622]], nodes: 7, leafScale: 0.86 },
         { pts: [[164, 584], [204, 548], [246, 522], [286, 512]], nodes: 5, leafScale: 0.82 },
         { pts: [[136, 588], [156, 636], [164, 686], [158, 734]], nodes: 5, leafScale: 0.8 },
       ],
       seed: 1515,
-      phase: 5.4,
-      freq: 1.16,
-      amp: 2.1,
     },
-    // Short delicate bottom-margin finishing tuft
     {
       id: 'front-bottom-tuft',
-      pivot: [66, 756],
       twigs: [
         { pts: [[66, 756], [122, 744], [176, 758], [224, 788]], nodes: 5, leafScale: 0.82 },
         { pts: [[104, 748], [134, 718], [168, 698], [202, 692]], nodes: 4, leafScale: 0.78 },
       ],
       seed: 1616,
-      phase: 1.6,
-      freq: 1.12,
-      amp: 1.85,
     },
   ];
 
@@ -596,12 +458,6 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
     clusters.push({
       id: fd.id,
       layer: 'front',
-      pivotX: fd.pivot[0],
-      pivotY: fd.pivot[1],
-      swayAmp: fd.amp,
-      windFreq: fd.freq,
-      phase: fd.phase,
-      scrollSensitivity: 0.95,
       woodPaths: [],
       twigs: fd.twigs.map((tw, tIdx) =>
         populateCubicTwig({
@@ -620,29 +476,17 @@ function createCornerCanopyClusters(): WindBoughCluster[] {
   return clusters;
 }
 
-/**
- * Generates an organic, intentionally non-symmetrical right-side canopy composition:
- * - Coordinates live in viewBox [0..540, 0..900], anchored out of the top-right corner & right edge (x = 540+).
- * - Staggered vertical anchors, distinct branch lengths/angles, extra trailing low tendrils, and independent PRNG seeds
- *   ensure it complements the left canopy naturally without mirror symmetry.
- */
 function createRightCornerCanopyClusters(): WindBoughCluster[] {
   const clusters: WindBoughCluster[] = [];
 
-  // ---------------------------------------------------------------------------
-  // 1. BACK DENSE TOP-RIGHT CORNER & RIGHT MARGIN VOLUME
-  // ---------------------------------------------------------------------------
   const backDefs: Array<{
     id: string;
-    pivot: Pt;
     limbs: Array<[Pt, Pt, Pt, Pt]>;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number }>;
     seed: number;
-    phase: number;
   }> = [
     {
       id: 'r-back-corner-crown',
-      pivot: [498, -18],
       limbs: [
         [[518, -22], [496, 38], [434, 68], [346, 78]],
         [[432, -24], [408, 22], [358, 46], [284, 52]],
@@ -656,11 +500,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[558, 104], [486, 126], [412, 138], [342, 128]], nodes: 8 },
       ],
       seed: 2101,
-      phase: 0.9,
     },
     {
       id: 'r-back-upper-wall',
-      pivot: [564, 212],
       limbs: [
         [[564, 212], [488, 186], [414, 198], [348, 232]],
         [[562, 268], [492, 304], [422, 328], [362, 366]],
@@ -672,11 +514,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[554, 318], [482, 326], [420, 314], [352, 290]], nodes: 7 },
       ],
       seed: 2202,
-      phase: 2.1,
     },
     {
       id: 'r-back-mid-wall',
-      pivot: [564, 434],
       limbs: [
         [[564, 434], [492, 408], [422, 424], [364, 464]],
         [[562, 488], [496, 524], [438, 558], [392, 598]],
@@ -687,36 +527,25 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[552, 496], [486, 514], [434, 548], [396, 596]], nodes: 7 },
       ],
       seed: 2303,
-      phase: 3.4,
     },
     {
       id: 'r-back-lower-wall',
-      pivot: [562, 658],
-      limbs: [
-        [[562, 658], [498, 636], [442, 650], [396, 688]],
-      ],
+      limbs: [[[562, 658], [498, 636], [442, 650], [396, 688]]],
       twigs: [
         { pts: [[550, 612], [494, 602], [444, 622], [400, 658]], nodes: 6 },
         { pts: [[532, 658], [478, 666], [432, 692], [398, 732]], nodes: 6 },
         { pts: [[554, 718], [504, 736], [462, 768], [432, 814]], nodes: 6 },
       ],
       seed: 2404,
-      phase: 4.6,
     },
   ];
 
-  backDefs.forEach((bd, idx) => {
+  backDefs.forEach((bd) => {
     clusters.push({
       id: bd.id,
       layer: 'back',
-      pivotX: bd.pivot[0],
-      pivotY: bd.pivot[1],
-      swayAmp: 0.7,
-      windFreq: 0.64 + idx * 0.065,
-      phase: bd.phase,
-      scrollSensitivity: 0.24,
       woodPaths: bd.limbs.map((pts) => ({
-        d: buildTaperedCubicBranch(pts, 4.0, 1.35),
+        ...buildTaperedCubicBranchPts(pts, 4.0, 1.35),
         color: '#3C422F',
       })),
       twigs: bd.twigs.map((tw, tIdx) =>
@@ -732,22 +561,14 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // 2. MID-CANOPY MULTI-DIRECTIONAL BOUGHS (Staggered heights vs left side)
-  // ---------------------------------------------------------------------------
   const midDefs: Array<{
     id: string;
-    pivot: Pt;
     limbs: Array<[Pt, Pt, Pt, Pt]>;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number; leafScale?: number }>;
     seed: number;
-    phase: number;
-    freq: number;
   }> = [
-    // Top-right header-edge draping bough (slightly wider sweep leftward)
     {
       id: 'r-mid-top-drape',
-      pivot: [362, -20],
       limbs: [[[362, -20], [342, 26], [298, 58], [228, 72]]],
       twigs: [
         { pts: [[354, 8], [344, 58], [326, 108], [296, 152]], nodes: 7 },
@@ -756,13 +577,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[346, 24], [382, 48], [416, 62], [446, 58]], nodes: 5, leafScale: 0.86 },
       ],
       seed: 2511,
-      phase: 1.4,
-      freq: 0.91,
     },
-    // Top-right corner bridge cluster
     {
       id: 'r-mid-corner-diag',
-      pivot: [556, 72],
       limbs: [[[556, 72], [492, 54], [424, 72], [358, 114]]],
       twigs: [
         { pts: [[522, 62], [478, 26], [426, 10], [372, 14]], nodes: 6, leafScale: 0.9 },
@@ -770,13 +587,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[496, 64], [464, 118], [448, 174], [440, 232]], nodes: 7 },
       ],
       seed: 2547,
-      phase: 1.9,
-      freq: 0.87,
     },
-    // Upper-mid split (anchored at y=252, offset from left side's y=204)
     {
       id: 'r-mid-upper-split',
-      pivot: [558, 252],
       limbs: [[[558, 252], [476, 226], [384, 224], [294, 248]]],
       twigs: [
         { pts: [[506, 236], [442, 192], [372, 166], [298, 158]], nodes: 8 },
@@ -785,13 +598,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[392, 226], [406, 194], [428, 172], [454, 162]], nodes: 4, leafScale: 0.84 },
       ],
       seed: 2612,
-      phase: 2.8,
-      freq: 0.93,
     },
-    // Center S-curve (anchored at y=402, offset from left side's y=354)
     {
       id: 'r-mid-center-sweep',
-      pivot: [558, 402],
       limbs: [[[558, 402], [476, 386], [388, 406], [308, 388]]],
       twigs: [
         { pts: [[500, 392], [438, 352], [372, 334], [304, 332]], nodes: 8 },
@@ -799,13 +608,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[484, 394], [452, 444], [436, 492], [428, 536]], nodes: 6, leafScale: 0.88 },
       ],
       seed: 2713,
-      phase: 3.9,
-      freq: 0.85,
     },
-    // Lower-mid weeping & counter-arch (anchored at y=558, offset from left side's y=514)
     {
       id: 'r-mid-lower-arch',
-      pivot: [558, 558],
       limbs: [[[558, 558], [482, 540], [406, 556], [338, 592]]],
       twigs: [
         { pts: [[506, 546], [448, 508], [386, 490], [322, 488]], nodes: 7 },
@@ -813,13 +618,9 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[492, 550], [468, 602], [456, 648], [454, 690]], nodes: 5, leafScale: 0.88 },
       ],
       seed: 2814,
-      phase: 5.0,
-      freq: 0.9,
     },
-    // Bottom cascading feather bough
     {
       id: 'r-mid-bottom-cascade',
-      pivot: [556, 722],
       limbs: [[[556, 722], [492, 708], [432, 728], [382, 764]]],
       twigs: [
         { pts: [[514, 714], [464, 682], [412, 668], [358, 670]], nodes: 6 },
@@ -827,8 +628,6 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
         { pts: [[512, 720], [492, 774], [482, 824], [480, 868]], nodes: 5, leafScale: 0.84 },
       ],
       seed: 2915,
-      phase: 0.5,
-      freq: 0.83,
     },
   ];
 
@@ -836,14 +635,8 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
     clusters.push({
       id: md.id,
       layer: 'mid',
-      pivotX: md.pivot[0],
-      pivotY: md.pivot[1],
-      swayAmp: 1.32,
-      windFreq: md.freq,
-      phase: md.phase,
-      scrollSensitivity: 0.52,
       woodPaths: md.limbs.map((pts) => ({
-        d: buildTaperedCubicBranch(pts, 3.1, 1.0),
+        ...buildTaperedCubicBranchPts(pts, 3.1, 1.0),
         color: '#4F4C3A',
       })),
       twigs: md.twigs.map((tw, tIdx) =>
@@ -860,99 +653,62 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
     });
   });
 
-  // ---------------------------------------------------------------------------
-  // 3. FRONT EXPRESSIVE ASYMMETRIC SHOOTS (Varied lengths & non-mirrored reaches)
-  // ---------------------------------------------------------------------------
   const frontDefs: Array<{
     id: string;
-    pivot: Pt;
     twigs: Array<{ pts: [Pt, Pt, Pt, Pt]; nodes: number; leafScale: number }>;
     seed: number;
-    phase: number;
-    freq: number;
-    amp: number;
   }> = [
-    // Medium-long top-right corner shoot (shorter than left's 472px reach for asymmetry)
     {
       id: 'r-front-corner-tuft',
-      pivot: [298, -14],
       twigs: [
         { pts: [[298, -14], [244, 24], [174, 36], [102, 22]], nodes: 9, leafScale: 0.9 },
         { pts: [[258, 14], [208, 48], [162, 90], [128, 138]], nodes: 6, leafScale: 0.85 },
         { pts: [[282, 4], [296, 48], [292, 92], [274, 130]], nodes: 5, leafScale: 0.82 },
       ],
       seed: 3111,
-      phase: 1.5,
-      freq: 1.21,
-      amp: 2.25,
     },
-    // Upper curving shoot reaching leftward with playful downward pendant
     {
       id: 'r-front-upper-reach',
-      pivot: [378, 148],
       twigs: [
         { pts: [[378, 148], [282, 174], [174, 154], [76, 118]], nodes: 10, leafScale: 0.92 },
         { pts: [[268, 166], [206, 198], [154, 236], [118, 282]], nodes: 7, leafScale: 0.86 },
         { pts: [[322, 162], [306, 128], [282, 102], [254, 88]], nodes: 4, leafScale: 0.8 },
       ],
       seed: 3212,
-      phase: 2.6,
-      freq: 1.3,
-      amp: 2.6,
     },
-    // Signature extra-long expressive S-curved mid-bough (longest shoot on right side, reaching x=44)
     {
       id: 'r-front-mid-sweep',
-      pivot: [392, 312],
       twigs: [
         { pts: [[392, 312], [292, 288], [172, 316], [56, 356]], nodes: 11, leafScale: 0.93 },
         { pts: [[284, 298], [220, 272], [158, 256], [104, 258]], nodes: 7, leafScale: 0.86 },
         { pts: [[342, 302], [326, 348], [318, 394], [324, 438]], nodes: 5, leafScale: 0.82 },
       ],
       seed: 3313,
-      phase: 3.8,
-      freq: 1.24,
-      amp: 2.7,
     },
-    // Graceful upward-arching mid-lower shoot
     {
       id: 'r-front-lower-arch',
-      pivot: [406, 482],
       twigs: [
         { pts: [[406, 482], [328, 492], [238, 458], [154, 414]], nodes: 9, leafScale: 0.88 },
         { pts: [[318, 482], [260, 504], [210, 536], [174, 576]], nodes: 6, leafScale: 0.84 },
       ],
       seed: 3414,
-      phase: 4.9,
-      freq: 1.26,
-      amp: 2.3,
     },
-    // Longer lower-margin weeping bough (extends lower than left side's lower tuft for natural balance)
     {
       id: 'r-front-lower-weep',
-      pivot: [436, 636],
       twigs: [
         { pts: [[436, 636], [358, 620], [280, 634], [208, 668]], nodes: 8, leafScale: 0.87 },
         { pts: [[378, 626], [336, 590], [292, 566], [248, 558]], nodes: 5, leafScale: 0.82 },
         { pts: [[406, 630], [386, 682], [376, 734], [382, 784]], nodes: 6, leafScale: 0.82 },
       ],
       seed: 3515,
-      phase: 0.8,
-      freq: 1.15,
-      amp: 2.15,
     },
-    // Delicate bottom-right finishing sprig
     {
       id: 'r-front-bottom-tuft',
-      pivot: [478, 788],
       twigs: [
         { pts: [[478, 788], [422, 774], [368, 788], [322, 818]], nodes: 5, leafScale: 0.8 },
         { pts: [[440, 778], [410, 748], [376, 728], [344, 722]], nodes: 4, leafScale: 0.78 },
       ],
       seed: 3616,
-      phase: 2.2,
-      freq: 1.1,
-      amp: 1.8,
     },
   ];
 
@@ -960,12 +716,6 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
     clusters.push({
       id: fd.id,
       layer: 'front',
-      pivotX: fd.pivot[0],
-      pivotY: fd.pivot[1],
-      swayAmp: fd.amp,
-      windFreq: fd.freq,
-      phase: fd.phase,
-      scrollSensitivity: 0.92,
       woodPaths: [],
       twigs: fd.twigs.map((tw, tIdx) =>
         populateCubicTwig({
@@ -984,347 +734,375 @@ function createRightCornerCanopyClusters(): WindBoughCluster[] {
   return clusters;
 }
 
-interface CanopyLayerSvgProps {
-  idPrefix: 'left' | 'right';
-  clusters: WindBoughCluster[];
-  className: string;
-  preserveAspectRatio: string;
-}
+const LEAF_TONE_ORDER: LeafTone[] = ['shadow', 'silver', 'olive', 'sunlit'];
 
-const CanopyLayerSvg: React.FC<CanopyLayerSvgProps> = ({
-  idPrefix,
-  clusters,
-  className,
-  preserveAspectRatio,
-}) => {
-  const leafShadowId = `${idPrefix}-canopy-leaf-shadow`;
-  const leafOliveId = `${idPrefix}-canopy-leaf-olive`;
-  const leafSunlitId = `${idPrefix}-canopy-leaf-sunlit`;
-  const leafSilverId = `${idPrefix}-canopy-leaf-silver`;
-  const oliveGreenId = `${idPrefix}-canopy-olive-green`;
-  const oliveDarkId = `${idPrefix}-canopy-olive-dark`;
-
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 540 900"
-      preserveAspectRatio={preserveAspectRatio}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id={leafShadowId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2D3B23" />
-          <stop offset="100%" stopColor="#3F5031" />
-        </linearGradient>
-        <linearGradient id={leafOliveId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#485B36" />
-          <stop offset="60%" stopColor="#586D41" />
-          <stop offset="100%" stopColor="#697F4E" />
-        </linearGradient>
-        <linearGradient id={leafSunlitId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#697D44" />
-          <stop offset="55%" stopColor="#7E9252" />
-          <stop offset="100%" stopColor="#94A765" />
-        </linearGradient>
-        <linearGradient id={leafSilverId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#8A997E" />
-          <stop offset="58%" stopColor="#A2B097" />
-          <stop offset="100%" stopColor="#B8C4AE" />
-        </linearGradient>
-        <radialGradient id={oliveGreenId} cx="35%" cy="32%" r="65%">
-          <stop offset="0%" stopColor="#9AB060" />
-          <stop offset="58%" stopColor="#6D833F" />
-          <stop offset="100%" stopColor="#4A5B2A" />
-        </radialGradient>
-        <radialGradient id={oliveDarkId} cx="35%" cy="32%" r="65%">
-          <stop offset="0%" stopColor="#726958" />
-          <stop offset="58%" stopColor="#4B4438" />
-          <stop offset="100%" stopColor="#2F2B23" />
-        </radialGradient>
-      </defs>
-
-      {clusters.map((cluster) => (
-        <g key={cluster.id} opacity={cluster.clusterOpacity}>
-          <g
-            className="js-canopy-wind"
-            data-side={idPrefix}
-            data-pivot-x={cluster.pivotX}
-            data-pivot-y={cluster.pivotY}
-            data-sway-amp={cluster.swayAmp}
-            data-wind-freq={cluster.windFreq}
-            data-phase={cluster.phase}
-            data-scroll-sens={cluster.scrollSensitivity}
-          >
-            {cluster.woodPaths.map((wp, wIdx) => (
-              <path key={`${cluster.id}-wood-${wIdx}`} d={wp.d} fill={wp.color} />
-            ))}
-
-            {cluster.twigs.map((twig, twIdx) => (
-              <g key={`${cluster.id}-tw-${twIdx}`}>
-                <path
-                  d={twig.pathD}
-                  fill="none"
-                  stroke={twig.strokeColor}
-                  strokeWidth={twig.strokeWidth}
-                  strokeLinecap="round"
-                />
-
-                {/* Deep interior shadow leaves */}
-                {twig.leaves
-                  .filter((l) => l.tone === 'shadow')
-                  .map((l, lIdx) => {
-                    const { bladeD, petioleD } = buildSlenderOliveLeafD(l.length, l.width, l.bend);
-                    return (
-                      <g
-                        key={`${cluster.id}-${twIdx}-sh-${lIdx}`}
-                        transform={`translate(${l.x.toFixed(1)}, ${l.y.toFixed(1)}) rotate(${l.angle.toFixed(1)})`}
-                      >
-                        <path
-                          d={petioleD}
-                          fill="none"
-                          stroke="#3F4732"
-                          strokeWidth="0.9"
-                          strokeLinecap="round"
-                        />
-                        <path d={bladeD} fill={`url(#${leafShadowId})`} />
-                      </g>
-                    );
-                  })}
-
-                {/* Silvery-sage undersides */}
-                {twig.leaves
-                  .filter((l) => l.tone === 'silver')
-                  .map((l, lIdx) => {
-                    const { bladeD, midribD, petioleD } = buildSlenderOliveLeafD(
-                      l.length,
-                      l.width,
-                      l.bend
-                    );
-                    return (
-                      <g
-                        key={`${cluster.id}-${twIdx}-sv-${lIdx}`}
-                        transform={`translate(${l.x.toFixed(1)}, ${l.y.toFixed(1)}) rotate(${l.angle.toFixed(1)})`}
-                      >
-                        <path
-                          d={petioleD}
-                          fill="none"
-                          stroke="#636C54"
-                          strokeWidth="0.9"
-                          strokeLinecap="round"
-                        />
-                        <path d={bladeD} fill={`url(#${leafSilverId})`} />
-                        <path
-                          d={midribD}
-                          fill="none"
-                          stroke="#7C8C6F"
-                          strokeWidth="0.65"
-                          strokeLinecap="round"
-                          opacity="0.65"
-                        />
-                      </g>
-                    );
-                  })}
-
-                {/* Rich Istrian olive greens */}
-                {twig.leaves
-                  .filter((l) => l.tone === 'olive')
-                  .map((l, lIdx) => {
-                    const { bladeD, midribD, petioleD } = buildSlenderOliveLeafD(
-                      l.length,
-                      l.width,
-                      l.bend
-                    );
-                    return (
-                      <g
-                        key={`${cluster.id}-${twIdx}-ol-${lIdx}`}
-                        transform={`translate(${l.x.toFixed(1)}, ${l.y.toFixed(1)}) rotate(${l.angle.toFixed(1)})`}
-                      >
-                        <path
-                          d={petioleD}
-                          fill="none"
-                          stroke="#525B3E"
-                          strokeWidth="0.9"
-                          strokeLinecap="round"
-                        />
-                        <path d={bladeD} fill={`url(#${leafOliveId})`} />
-                        <path
-                          d={midribD}
-                          fill="none"
-                          stroke="#98AA83"
-                          strokeWidth="0.65"
-                          strokeLinecap="round"
-                          opacity="0.7"
-                        />
-                      </g>
-                    );
-                  })}
-
-                {/* Sunlit outer leaf highlights */}
-                {twig.leaves
-                  .filter((l) => l.tone === 'sunlit')
-                  .map((l, lIdx) => {
-                    const { bladeD, midribD, petioleD } = buildSlenderOliveLeafD(
-                      l.length,
-                      l.width,
-                      l.bend
-                    );
-                    return (
-                      <g
-                        key={`${cluster.id}-${twIdx}-sn-${lIdx}`}
-                        transform={`translate(${l.x.toFixed(1)}, ${l.y.toFixed(1)}) rotate(${l.angle.toFixed(1)})`}
-                      >
-                        <path
-                          d={petioleD}
-                          fill="none"
-                          stroke="#667349"
-                          strokeWidth="0.9"
-                          strokeLinecap="round"
-                        />
-                        <path d={bladeD} fill={`url(#${leafSunlitId})`} />
-                        <path
-                          d={midribD}
-                          fill="none"
-                          stroke="#C4D3A4"
-                          strokeWidth="0.7"
-                          strokeLinecap="round"
-                          opacity="0.75"
-                        />
-                      </g>
-                    );
-                  })}
-
-                {/* Subtle olives tucked inside foliage */}
-                {twig.olives.map((ov, oIdx) => (
-                  <g key={`${cluster.id}-${twIdx}-ov-${oIdx}`}>
-                    <path
-                      d={`M ${ov.x.toFixed(1)},${ov.y.toFixed(1)} L ${(ov.x + ov.stemDx).toFixed(1)},${(ov.y + ov.stemDy * 0.7).toFixed(1)}`}
-                      fill="none"
-                      stroke="#5A6345"
-                      strokeWidth="0.95"
-                      strokeLinecap="round"
-                    />
-                    <ellipse
-                      cx="0"
-                      cy="0"
-                      rx="3.8"
-                      ry="5.7"
-                      transform={`translate(${(ov.x + ov.stemDx).toFixed(1)}, ${(ov.y + ov.stemDy).toFixed(1)}) rotate(${ov.tilt})`}
-                      fill={ov.dark ? `url(#${oliveDarkId})` : `url(#${oliveGreenId})`}
-                    />
-                  </g>
-                ))}
-              </g>
-            ))}
-          </g>
-        </g>
-      ))}
-    </svg>
-  );
+const LEAF_STYLES: Record<
+  LeafTone,
+  {
+    petiole: string;
+    stops: Array<[number, string]>;
+    midrib?: { color: string; width: number; alpha: number };
+  }
+> = {
+  shadow: {
+    petiole: '#3F4732',
+    stops: [
+      [0, '#2D3B23'],
+      [1, '#3F5031'],
+    ],
+  },
+  silver: {
+    petiole: '#636C54',
+    stops: [
+      [0, '#8A997E'],
+      [0.58, '#A2B097'],
+      [1, '#B8C4AE'],
+    ],
+    midrib: { color: '#7C8C6F', width: 0.65, alpha: 0.65 },
+  },
+  olive: {
+    petiole: '#525B3E',
+    stops: [
+      [0, '#485B36'],
+      [0.6, '#586D41'],
+      [1, '#697F4E'],
+    ],
+    midrib: { color: '#98AA83', width: 0.65, alpha: 0.7 },
+  },
+  sunlit: {
+    petiole: '#667349',
+    stops: [
+      [0, '#697D44'],
+      [0.55, '#7E9252'],
+      [1, '#94A765'],
+    ],
+    midrib: { color: '#C4D3A4', width: 0.7, alpha: 0.75 },
+  },
 };
 
-export const OliveBranchScrollBg: React.FC<OliveBranchScrollBgProps> = ({ heroRef }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const leftClusters = useMemo(() => createCornerCanopyClusters(), []);
-  const rightClusters = useMemo(() => createRightCornerCanopyClusters(), []);
+function drawCanopyLayerToCanvas(
+  canvas: HTMLCanvasElement,
+  clusters: WindBoughCluster[],
+  side: 'left' | 'right',
+  isCompactViewport: boolean
+) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
+  const dpr = Math.min(window.devicePixelRatio || 1, isCompactViewport ? 1.25 : 1.5);
+  const scale = isCompactViewport ? 0.65 * dpr : dpr;
+  const pixelW = Math.round(VIEW_W * scale);
+  const pixelH = Math.round(VIEW_H * scale);
+
+  if (canvas.width !== pixelW || canvas.height !== pixelH) {
+    canvas.width = pixelW;
+    canvas.height = pixelH;
+  }
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, pixelW, pixelH);
+  ctx.scale(scale, scale);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  for (const cluster of clusters) {
+    ctx.save();
+    ctx.globalAlpha = cluster.clusterOpacity;
+
+    // 1. Tapered wood branches
+    for (const wp of cluster.woodPaths) {
+      ctx.beginPath();
+      wp.leftPts.forEach((pt, idx) => {
+        if (idx === 0) ctx.moveTo(pt[0], pt[1]);
+        else ctx.lineTo(pt[0], pt[1]);
+      });
+      for (let i = wp.rightPts.length - 1; i >= 0; i--) {
+        ctx.lineTo(wp.rightPts[i][0], wp.rightPts[i][1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = wp.color;
+      ctx.fill();
+    }
+
+    // 2. Twigs, leaves by tone depth, and olives
+    for (const twig of cluster.twigs) {
+      const [p0, p1, p2, p3] = twig.pts;
+      ctx.beginPath();
+      ctx.moveTo(p0[0], p0[1]);
+      ctx.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
+      ctx.strokeStyle = twig.strokeColor;
+      ctx.lineWidth = twig.strokeWidth;
+      ctx.stroke();
+
+      for (const tone of LEAF_TONE_ORDER) {
+        const style = LEAF_STYLES[tone];
+        for (const leaf of twig.leaves) {
+          if (leaf.tone !== tone) continue;
+
+          const petiole = Math.max(2.0, leaf.length * 0.1);
+          const bladeLen = leaf.length - petiole;
+          const hw = leaf.width * 0.5;
+          const c1x = petiole + bladeLen * 0.26;
+          const c2x = petiole + bladeLen * 0.72;
+
+          ctx.save();
+          ctx.translate(leaf.x, leaf.y);
+          ctx.rotate(leaf.angle);
+
+          // Petiole
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(petiole + 0.8, 0);
+          ctx.strokeStyle = style.petiole;
+          ctx.lineWidth = 0.9;
+          ctx.stroke();
+
+          // Lanceolate leaf blade
+          const grad = ctx.createLinearGradient(petiole, -hw, leaf.length, hw);
+          for (const [offset, color] of style.stops) {
+            grad.addColorStop(offset, color);
+          }
+
+          ctx.beginPath();
+          ctx.moveTo(petiole, 0);
+          ctx.bezierCurveTo(
+            c1x,
+            -hw * 0.92 + leaf.bend * 0.24,
+            c2x,
+            -hw * 0.68 + leaf.bend * 0.76,
+            leaf.length,
+            leaf.bend
+          );
+          ctx.bezierCurveTo(
+            c2x,
+            hw * 0.68 + leaf.bend * 0.76,
+            c1x,
+            hw * 0.92 + leaf.bend * 0.24,
+            petiole,
+            0
+          );
+          ctx.closePath();
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Delicate midrib
+          if (style.midrib) {
+            ctx.beginPath();
+            ctx.moveTo(petiole, 0);
+            ctx.quadraticCurveTo(
+              petiole + bladeLen * 0.48,
+              leaf.bend * 0.42,
+              petiole + bladeLen * 0.85,
+              leaf.bend * 0.82
+            );
+            ctx.strokeStyle = style.midrib.color;
+            ctx.lineWidth = style.midrib.width;
+            ctx.globalAlpha = cluster.clusterOpacity * style.midrib.alpha;
+            ctx.stroke();
+            ctx.globalAlpha = cluster.clusterOpacity;
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // Olives tucked in foliage
+      for (const ov of twig.olives) {
+        ctx.beginPath();
+        ctx.moveTo(ov.x, ov.y);
+        ctx.lineTo(ov.x + ov.stemDx, ov.y + ov.stemDy * 0.7);
+        ctx.strokeStyle = '#5A6345';
+        ctx.lineWidth = 0.95;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(ov.x + ov.stemDx, ov.y + ov.stemDy);
+        ctx.rotate(ov.tilt);
+        const rGrad = ctx.createRadialGradient(-1.1, -1.7, 0.4, 0, 0, 5.8);
+        if (ov.dark) {
+          rGrad.addColorStop(0, '#726958');
+          rGrad.addColorStop(0.58, '#4B4438');
+          rGrad.addColorStop(1, '#2F2B23');
+        } else {
+          rGrad.addColorStop(0, '#9AB060');
+          rGrad.addColorStop(0.58, '#6D833F');
+          rGrad.addColorStop(1, '#4A5B2A');
+        }
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 3.8, 5.7, 0, 0, Math.PI * 2);
+        ctx.fillStyle = rGrad;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // Bake horizontal atmospheric fade mask directly into canvas alpha (eliminates runtime CSS mask-image compositing)
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-in';
+  const maskGrad =
+    side === 'left'
+      ? ctx.createLinearGradient(0, 0, VIEW_W, 0)
+      : ctx.createLinearGradient(VIEW_W, 0, 0, 0);
+
+  if (isCompactViewport) {
+    maskGrad.addColorStop(0, 'rgba(0,0,0,1)');
+    maskGrad.addColorStop(0.55, 'rgba(0,0,0,1)');
+    maskGrad.addColorStop(0.82, 'rgba(0,0,0,0.4)');
+    maskGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  } else {
+    maskGrad.addColorStop(0, 'rgba(0,0,0,1)');
+    maskGrad.addColorStop(0.84, 'rgba(0,0,0,1)');
+    maskGrad.addColorStop(0.94, 'rgba(0,0,0,0.65)');
+    maskGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  }
+  ctx.fillStyle = maskGrad;
+  ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  ctx.restore();
+}
+
+let cachedLeftClusters: WindBoughCluster[] | null = null;
+let cachedRightClusters: WindBoughCluster[] | null = null;
+
+function getCanopyClusters() {
+  if (!cachedLeftClusters) cachedLeftClusters = createCornerCanopyClusters();
+  if (!cachedRightClusters) cachedRightClusters = createRightCornerCanopyClusters();
+  return { left: cachedLeftClusters, right: cachedRightClusters };
+}
+
+export const OliveBranchScrollBg: React.FC<OliveBranchScrollBgProps> = ({ heroRef: _heroRef }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const leftBackRef = useRef<HTMLCanvasElement | null>(null);
+  const leftMidRef = useRef<HTMLCanvasElement | null>(null);
+  const leftFrontRef = useRef<HTMLCanvasElement | null>(null);
+  const rightBackRef = useRef<HTMLCanvasElement | null>(null);
+  const rightMidRef = useRef<HTMLCanvasElement | null>(null);
+  const rightFrontRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Paint all 6 static botanical depth layers ONCE after initial paint (0ms impact on Hero LCP)
+  useEffect(() => {
+    let lastCompact = window.innerWidth < 768;
+    let paintHandle: number | null = null;
+
+    const paintAll = () => {
+      const { left, right } = getCanopyClusters();
+      const compact = window.innerWidth < 768;
+      lastCompact = compact;
+
+      const targets: Array<[HTMLCanvasElement | null, WindBoughCluster[], 'left' | 'right', CanopyDepth]> = [
+        [leftBackRef.current, left, 'left', 'back'],
+        [leftMidRef.current, left, 'left', 'mid'],
+        [leftFrontRef.current, left, 'left', 'front'],
+        [rightBackRef.current, right, 'right', 'back'],
+        [rightMidRef.current, right, 'right', 'mid'],
+        [rightFrontRef.current, right, 'right', 'front'],
+      ];
+
+      for (const [canvas, source, side, depth] of targets) {
+        if (!canvas) continue;
+        drawCanopyLayerToCanvas(
+          canvas,
+          source.filter((c) => c.layer === depth),
+          side,
+          compact
+        );
+      }
+    };
+
+    // Defer by 1 frame so critical above-the-fold Hero paints immediately
+    paintHandle = window.requestAnimationFrame(paintAll);
+
+    const handleResize = () => {
+      const compactNow = window.innerWidth < 768;
+      if (compactNow !== lastCompact) {
+        if (paintHandle !== null) window.cancelAnimationFrame(paintHandle);
+        paintHandle = window.requestAnimationFrame(paintAll);
+      }
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => {
+      if (paintHandle !== null) window.cancelAnimationFrame(paintHandle);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Automatically pause GPU animations when canopy wrapper is off-screen or browser tab is hidden
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const boughNodes = Array.from(container.querySelectorAll<SVGGElement>('.js-canopy-wind'));
-    if (prefersReducedMotion || boughNodes.length === 0) return;
+    let isIntersecting = false;
 
-    let rafId = 0;
-    let lastScrollY = window.scrollY;
-    let scrollVelocity = 0;
-    let smoothedGust = 0;
-    let lastTime = performance.now();
-
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY;
-      lastScrollY = currentY;
-      scrollVelocity = Math.max(-24, Math.min(24, scrollVelocity + delta * 0.085));
+    const syncPlayState = () => {
+      const shouldRun = isIntersecting && document.visibilityState === 'visible';
+      container.classList.toggle('canopy-paused', !shouldRun);
     };
 
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - lastTime) / 1000);
-      lastTime = now;
-      const t = now / 1000;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isIntersecting = entry.isIntersecting;
+        syncPlayState();
+      },
+      { rootMargin: '120px 0px' }
+    );
 
-      scrollVelocity *= Math.pow(0.08, dt);
-      smoothedGust += (scrollVelocity - smoothedGust) * Math.min(1, dt * 6);
-
-      const heroEl = heroRef.current;
-      const heroBottom = heroEl ? heroEl.offsetTop + heroEl.offsetHeight : window.innerHeight;
-      const scrollDepthRatio = Math.max(
-        0,
-        Math.min(1, (window.scrollY - Math.max(0, heroBottom - window.innerHeight)) / 2400)
-      );
-
-      for (let i = 0; i < boughNodes.length; i++) {
-        const node = boughNodes[i];
-        const isRight = node.dataset.side === 'right';
-        const pivotX = Number(node.dataset.pivotX ?? 0);
-        const pivotY = Number(node.dataset.pivotY ?? 0);
-        const amp = Number(node.dataset.swayAmp ?? 1.2);
-        const freq = Number(node.dataset.windFreq ?? 1);
-        const phase = Number(node.dataset.phase ?? 0);
-        const sens = Number(node.dataset.scrollSens ?? 0.5);
-
-        // Gentle breeze sweep offset between left & right sides so both canopies never move identically
-        const breezeTime = isRight ? t - 0.55 : t;
-        const primarySway = Math.sin(breezeTime * freq + phase);
-        const harmonicFlutter = 0.42 * Math.sin(breezeTime * freq * 1.73 + phase * 1.37);
-        const microRustle = 0.18 * Math.sin(breezeTime * freq * 2.91 + phase * 2.1);
-
-        const gustSign = isRight ? -0.15 : 0.18;
-        const angle =
-          (primarySway + harmonicFlutter + microRustle) * amp +
-          smoothedGust * gustSign * sens +
-          Math.sin(scrollDepthRatio * Math.PI * 1.5 + phase) * 0.65 * sens;
-
-        const translateY = (primarySway * 1.35 + harmonicFlutter * 0.65) * sens;
-
-        node.setAttribute(
-          'transform',
-          `translate(${pivotX} ${(pivotY + translateY).toFixed(2)}) rotate(${angle.toFixed(2)}) translate(${-pivotX} ${-pivotY})`
-        );
-      }
-
-      rafId = window.requestAnimationFrame(tick);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    rafId = window.requestAnimationFrame(tick);
+    observer.observe(container);
+    document.addEventListener('visibilitychange', syncPlayState);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.cancelAnimationFrame(rafId);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', syncPlayState);
     };
-  }, [heroRef]);
+  }, []);
+
+  const leftWrapperClass =
+    'absolute left-0 top-0 h-[420px] sm:h-[580px] md:h-full w-[138px] sm:w-[235px] md:w-[420px] lg:w-[485px] xl:w-[545px] 2xl:w-[585px] opacity-[0.34] sm:opacity-[0.54] md:opacity-[0.80] lg:opacity-[0.90] xl:opacity-[0.96]';
+
+  const rightWrapperClass =
+    'absolute right-0 top-0 h-[420px] sm:h-[580px] md:h-full w-[132px] sm:w-[225px] md:w-[408px] lg:w-[475px] xl:w-[532px] 2xl:w-[572px] opacity-[0.32] sm:opacity-[0.52] md:opacity-[0.78] lg:opacity-[0.88] xl:opacity-[0.95]';
 
   return (
     <div
       ref={containerRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-[5]"
+      className="pointer-events-none absolute inset-0 z-[5] canopy-paused"
     >
       {/* Anchored flush beneath the sticky header so both canopies fill the upper corners */}
       <div className="sticky top-[60px] sm:top-[68px] lg:top-[76px] h-[calc(100vh-60px)] sm:h-[calc(100vh-68px)] lg:h-[calc(100vh-76px)] w-full overflow-hidden">
-        <CanopyLayerSvg
-          idPrefix="left"
-          clusters={leftClusters}
-          preserveAspectRatio="xMinYMin slice"
-          className="absolute left-0 top-0 h-[420px] sm:h-[580px] md:h-full w-[138px] sm:w-[235px] md:w-[420px] lg:w-[485px] xl:w-[545px] 2xl:w-[585px] opacity-[0.34] sm:opacity-[0.54] md:opacity-[0.80] lg:opacity-[0.90] xl:opacity-[0.96] [mask-image:linear-gradient(to_right,black_0%,black_55%,rgba(0,0,0,0.4)_82%,transparent_100%)] md:[mask-image:linear-gradient(to_right,black_0%,black_84%,rgba(0,0,0,0.65)_94%,transparent_100%)]"
-        />
-        <CanopyLayerSvg
-          idPrefix="right"
-          clusters={rightClusters}
-          preserveAspectRatio="xMaxYMin slice"
-          className="absolute right-0 top-0 h-[420px] sm:h-[580px] md:h-full w-[132px] sm:w-[225px] md:w-[408px] lg:w-[475px] xl:w-[532px] 2xl:w-[572px] opacity-[0.32] sm:opacity-[0.52] md:opacity-[0.78] lg:opacity-[0.88] xl:opacity-[0.95] [mask-image:linear-gradient(to_left,black_0%,black_55%,rgba(0,0,0,0.4)_82%,transparent_100%)] md:[mask-image:linear-gradient(to_left,black_0%,black_84%,rgba(0,0,0,0.65)_94%,transparent_100%)]"
-        />
+        {/* Left asymmetric canopy — 3 GPU-composited depth layers */}
+        <div className={leftWrapperClass}>
+          <canvas
+            ref={leftBackRef}
+            className="absolute inset-0 w-full h-full object-cover object-left-top canopy-layer-back-left"
+          />
+          <canvas
+            ref={leftMidRef}
+            className="absolute inset-0 w-full h-full object-cover object-left-top canopy-layer-mid-left"
+          />
+          <canvas
+            ref={leftFrontRef}
+            className="absolute inset-0 w-full h-full object-cover object-left-top canopy-layer-front-left"
+          />
+        </div>
+
+        {/* Right asymmetric canopy — 3 GPU-composited depth layers */}
+        <div className={rightWrapperClass}>
+          <canvas
+            ref={rightBackRef}
+            className="absolute inset-0 w-full h-full object-cover object-right-top canopy-layer-back-right"
+          />
+          <canvas
+            ref={rightMidRef}
+            className="absolute inset-0 w-full h-full object-cover object-right-top canopy-layer-mid-right"
+          />
+          <canvas
+            ref={rightFrontRef}
+            className="absolute inset-0 w-full h-full object-cover object-right-top canopy-layer-front-right"
+          />
+        </div>
       </div>
     </div>
   );

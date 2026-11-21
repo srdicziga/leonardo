@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import React, { useRef } from 'react';
+import { motion, useInView, useReducedMotion } from 'motion/react';
 
 interface AmenityAnimatedIconProps {
   groupId: string;
@@ -8,13 +8,17 @@ interface AmenityAnimatedIconProps {
 /**
  * Thin (~1.25px stroke), subtly animated 64x64 fine-line icons illustrating each amenity module title.
  * Uses Leonardo House olive (#3A4F37) and warm brushed brass (#9A804B).
+ * Animations pause automatically whenever the icon is outside the viewport.
  */
 export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupId }) => {
-  const prefersReduced = useReducedMotion();
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const isInView = useInView(svgRef, { margin: '80px' });
+  const prefersReduced = useReducedMotion() || !isInView;
 
   if (groupId === 'outdoor') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -92,6 +96,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   if (groupId === 'kitchen') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -165,6 +170,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   if (groupId === 'bedrooms-bathroom') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -229,6 +235,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   if (groupId === 'house-rules') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -325,6 +332,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   if (groupId === 'location') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -395,6 +403,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   if (groupId === 'booking') {
     return (
       <svg
+        ref={svgRef}
         viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -462,6 +471,7 @@ export const AmenityAnimatedIcon: React.FC<AmenityAnimatedIconProps> = ({ groupI
   // 'family-comfort' — Villa home, climate comfort & seamless Wi-Fi connectivity
   return (
     <svg
+      ref={svgRef}
       viewBox="0 0 64 64"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

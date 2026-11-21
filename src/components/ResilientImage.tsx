@@ -6,6 +6,7 @@ interface ResilientImageProps {
   className?: string;
   containerClassName?: string;
   loading?: 'lazy' | 'eager';
+  fetchPriority?: 'high' | 'low' | 'auto';
   variant?: 'thumb' | 'card' | 'full';
   width?: number;
   height?: number;
@@ -17,6 +18,7 @@ export const ResilientImage: React.FC<ResilientImageProps> = ({
   className = 'w-full h-full object-cover',
   containerClassName = 'relative overflow-hidden bg-[#EFECE6]',
   loading = 'lazy',
+  fetchPriority,
   variant = 'card',
   width = 640,
   height = 427,
@@ -51,7 +53,8 @@ export const ResilientImage: React.FC<ResilientImageProps> = ({
           width={width}
           height={height}
           loading={loading}
-          decoding="async"
+          fetchPriority={fetchPriority}
+          decoding={loading === 'eager' ? 'sync' : 'async'}
           referrerPolicy="no-referrer"
           onError={() => setHasError(true)}
           className={className}

@@ -197,6 +197,7 @@ const MapContent: React.FC<{
 };
 
 export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }) => {
+  const mapHostRef = React.useRef<HTMLDivElement | null>(null);
   const runtimeMapsKey =
     typeof window !== 'undefined'
       ? (window as unknown as { __LEONARDO_CONFIG__?: { googleMapsApiKey?: string } })
@@ -208,6 +209,7 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
     undefined;
   const [mapTypeId, setMapTypeId] = useState<'roadmap' | 'hybrid'>('roadmap');
   const [hasQuotaError, setHasQuotaError] = useState<boolean>(false);
+  const [shouldLoadMap, setShouldLoadMap] = useState<boolean>(false);
 
   useEffect(() => {
     const onQuotaExceeded = () => setHasQuotaError(true);
@@ -215,11 +217,33 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
     return () => window.removeEventListener('gmp-quota-exceeded', onQuotaExceeded);
   }, []);
 
+  useEffect(() => {
+    if (!apiKey || shouldLoadMap) return;
+    const node = mapHostRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setShouldLoadMap(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoadMap(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '500px 0px' }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [apiKey, shouldLoadMap]);
+
   const t = MAP_LABELS[lang];
   const displayAddress = lang === 'sl' || lang === 'hr' ? CONTACT_INFO.address : CONTACT_INFO.addressInternational;
 
   return (
-    <div className="mt-6 pt-6 border-t border-[#E5DFD3]">
+    <div ref={mapHostRef} className="mt-6 pt-6 border-t border-[#E5DFD3]">
       {/* Compact Map Controls Row */}
       <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
         {apiKey && !hasQuotaError && (
@@ -268,13 +292,20 @@ export const LeonardoLocationMap: React.FC<LeonardoLocationMapProps> = ({ lang }
       {/* Explicit-Height Map Container matching card aesthetics */}
       <div className="relative w-full h-[230px] sm:h-[260px] rounded-xl overflow-hidden border border-[#DCD4C6] bg-[#EFECE4] shadow-[0_6px_18px_rgba(30,37,31,0.06)]">
         {apiKey ? (
-          <APIProvider apiKey={apiKey} language={lang} region="HR">
-            <MapContent
-              lang={lang}
-              mapTypeId={mapTypeId}
-              hasQuotaError={hasQuotaError}
-            />
-          </APIProvider>
+          shouldLoadMap ? (
+            <APIProvider apiKey={apiKey} language={lang} region="HR">
+              <MapContent
+                lang={lang}
+                mapTypeId={mapTypeId}
+                hasQuotaError={hasQuotaError}
+              />
+            </APIProvider>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center gap-2 bg-[#EFECE4] text-xs text-[#5C645A]">
+              <MapPin className="w-4 h-4 text-[#3A4F37]" />
+              <span>Leonardo House · {t.markerHint}</span>
+            </div>
+          )
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-[#EFECE4]">
             <div className="w-10 h-10 rounded-full bg-[#3A4F37]/12 border border-[#3A4F37]/25 text-[#3A4F37] flex items-center justify-center mb-3">

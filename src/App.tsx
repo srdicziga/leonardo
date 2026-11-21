@@ -1400,10 +1400,32 @@ export default function App() {
 
   useEffect(() => {
     if (isReviewsPaused) return;
+    const sliderEl = reviewsSliderRef.current;
+    let isVisible = false;
+    let observer: IntersectionObserver | null = null;
+
+    if (sliderEl && typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          isVisible = entry.isIntersecting;
+        },
+        { rootMargin: '120px 0px' }
+      );
+      observer.observe(sliderEl);
+    } else {
+      isVisible = true;
+    }
+
     const timer = window.setInterval(() => {
-      stepReviewSlider(1);
+      if (isVisible && document.visibilityState === 'visible') {
+        stepReviewSlider(1);
+      }
     }, 5500);
-    return () => window.clearInterval(timer);
+
+    return () => {
+      window.clearInterval(timer);
+      observer?.disconnect();
+    };
   }, [isReviewsPaused, stepReviewSlider]);
 
   useEffect(() => {
@@ -1510,9 +1532,9 @@ export default function App() {
         </div>
       )}
       {/* TOP BAR CONTRACT: Strictly 3 zones */}
-      <header className="sticky top-0 z-40 bg-[#FAF8F4]/95 backdrop-blur-md border-b border-[#E5DFD3]">
+      <header className="sticky top-0 z-40 bg-[#FAF8F4]/[0.97] border-b border-[#E5DFD3]">
         <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 px-3.5 sm:px-6 lg:px-10 py-2 sm:py-2.5">
-          {/* Zone 1: Original Leonardo House logo enhanced for crispness and clarity */}
+          {/* Zone 1: Original Leonardo House logo */}
           <a
             href="#top"
             onClick={(e) => {
@@ -1526,22 +1548,13 @@ export default function App() {
             aria-label="Leonardo House"
             className="inline-flex items-center whitespace-nowrap shrink-0 py-0.5 focus:outline-none min-w-0"
           >
-            <svg width="0" height="0" className="absolute pointer-events-none" aria-hidden="true">
-              <defs>
-                <filter id="lh-crisp-logo" colorInterpolationFilters="sRGB">
-                  <feConvolveMatrix
-                    order="3 3"
-                    kernelMatrix="0 -0.18 0 -0.18 1.72 -0.18 0 -0.18 0"
-                    preserveAlpha="true"
-                  />
-                </filter>
-              </defs>
-            </svg>
             <img
               src="/images/villa/LH_logo_hd.png"
               alt="Leonardo House"
+              fetchPriority="high"
+              decoding="sync"
               referrerPolicy="no-referrer"
-              className="h-11 sm:h-13 lg:h-14 w-auto max-w-[160px] sm:max-w-none object-contain select-none logo-crisp"
+              className="h-11 sm:h-13 lg:h-14 w-auto max-w-[160px] sm:max-w-none object-contain select-none contrast-[1.04] saturate-[1.04]"
             />
           </a>
 
@@ -1682,6 +1695,7 @@ export default function App() {
               src={HERO_SLIDES[heroSlideIdx].src}
               alt={HERO_SLIDES[heroSlideIdx].caption[lang]}
               loading="eager"
+              fetchPriority="high"
               containerClassName="w-full h-full"
               className="w-full h-full object-cover object-[center_52%] brightness-[1.02] contrast-[1.04] saturate-[1.03] transition-all duration-300"
             />
@@ -2956,7 +2970,7 @@ export default function App() {
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label={copy.backToTop}
-        className={`group fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-30 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF8F4]/95 hover:bg-[#3A4F37] text-[#1E251F] hover:text-[#FAF8F4] border border-[#D5CDBE] hover:border-[#3A4F37] backdrop-blur-md shadow-[0_8px_24px_rgba(30,37,31,0.14)] text-xs font-medium whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3A4F37] ${
+        className={`group fixed bottom-5 right-5 sm:bottom-7 sm:right-7 z-30 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FAF8F4] hover:bg-[#3A4F37] text-[#1E251F] hover:text-[#FAF8F4] border border-[#D5CDBE] hover:border-[#3A4F37] shadow-[0_8px_24px_rgba(30,37,31,0.14)] text-xs font-medium whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3A4F37] ${
           showBackToTop && !lightboxItem && !legalModal
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 translate-y-3 pointer-events-none'

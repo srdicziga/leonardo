@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import React, { useRef } from 'react';
+import { motion, useInView, useReducedMotion } from 'motion/react';
 
 interface FeatureAnimatedIconProps {
   index: number;
@@ -9,18 +9,22 @@ interface FeatureAnimatedIconProps {
 /**
  * Fine-line (~1.25px effective rendered stroke at 52x52px), subtly animated icons
  * matching each of the 6 "Why Leonardo House" feature pillars.
+ * Animations pause automatically whenever the icon scrolls out of the viewport.
  */
 export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
   index,
   isActive = false,
 }) => {
-  const prefersReduced = useReducedMotion();
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const isInView = useInView(svgRef, { margin: '80px' });
+  const prefersReduced = useReducedMotion() || !isInView;
 
   switch (index) {
     // 01. Heated outdoor pool & poolside shower
     case 0:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -64,6 +68,7 @@ export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
     case 1:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -123,6 +128,7 @@ export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
     case 2:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -177,6 +183,7 @@ export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
     case 3:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -232,6 +239,7 @@ export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
     case 4:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -266,6 +274,7 @@ export const FeatureAnimatedIcon: React.FC<FeatureAnimatedIconProps> = ({
     default:
       return (
         <svg
+          ref={svgRef}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"

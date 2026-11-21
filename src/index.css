@@ -1,12 +1,13 @@
 @import "tailwindcss";
+@import "./fonts.css";
 
 @theme {
   --font-serif: "Playfair Display", "Lora", Georgia, serif;
   --font-sans: "Lora", "Playfair Display", Georgia, serif;
   --font-mono: "Lora", Georgia, serif;
   --font-calligraphy: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --font-script: "Great Vibes", "Cormorant Garamond", cursive;
-  --font-logo-sans: "Montserrat", sans-serif;
+  --font-script: "Great Vibes", "Cormorant Garamond", Georgia, serif;
+  --font-logo-sans: "Montserrat", system-ui, -apple-system, sans-serif;
 }
 
 @utility font-calligraphy {
@@ -23,10 +24,6 @@
 
 @utility small-caps {
   font-variant-caps: small-caps;
-}
-
-@utility logo-crisp {
-  filter: url(#lh-crisp-logo) contrast(1.05) saturate(1.06);
 }
 
 @layer base {
@@ -114,6 +111,106 @@
   }
 }
 
+/* GPU-composited multi-depth breeze keyframes for canvas-cached olive canopies */
+@keyframes canopyBackLeft {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-0.55deg);
+  }
+  50% {
+    transform: translate3d(0, 2px, 0) rotate(0.65deg);
+  }
+}
+
+@keyframes canopyMidLeft {
+  0%, 100% {
+    transform: translate3d(0, -1px, 0) rotate(-1.1deg);
+  }
+  50% {
+    transform: translate3d(1px, 3px, 0) rotate(1.25deg);
+  }
+}
+
+@keyframes canopyFrontLeft {
+  0%, 100% {
+    transform: translate3d(0, -2px, 0) rotate(-1.7deg);
+  }
+  50% {
+    transform: translate3d(2px, 4px, 0) rotate(1.9deg);
+  }
+}
+
+@keyframes canopyBackRight {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0.55deg);
+  }
+  50% {
+    transform: translate3d(0, 2px, 0) rotate(-0.65deg);
+  }
+}
+
+@keyframes canopyMidRight {
+  0%, 100% {
+    transform: translate3d(0, -1px, 0) rotate(1.1deg);
+  }
+  50% {
+    transform: translate3d(-1px, 3px, 0) rotate(-1.25deg);
+  }
+}
+
+@keyframes canopyFrontRight {
+  0%, 100% {
+    transform: translate3d(0, -2px, 0) rotate(1.65deg);
+  }
+  50% {
+    transform: translate3d(-2px, 4px, 0) rotate(-1.85deg);
+  }
+}
+
+.canopy-layer-back-left {
+  transform-origin: 0% 10%;
+  animation: canopyBackLeft 9.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.canopy-layer-mid-left {
+  transform-origin: 0% 15%;
+  animation: canopyMidLeft 7.4s ease-in-out -1.4s infinite;
+  will-change: transform;
+}
+
+.canopy-layer-front-left {
+  transform-origin: 0% 20%;
+  animation: canopyFrontLeft 5.8s ease-in-out -2.8s infinite;
+  will-change: transform;
+}
+
+.canopy-layer-back-right {
+  transform-origin: 100% 10%;
+  animation: canopyBackRight 10.2s ease-in-out -0.9s infinite;
+  will-change: transform;
+}
+
+.canopy-layer-mid-right {
+  transform-origin: 100% 15%;
+  animation: canopyMidRight 7.9s ease-in-out -2.3s infinite;
+  will-change: transform;
+}
+
+.canopy-layer-front-right {
+  transform-origin: 100% 20%;
+  animation: canopyFrontRight 6.2s ease-in-out -3.6s infinite;
+  will-change: transform;
+}
+
+.canopy-paused .canopy-layer-back-left,
+.canopy-paused .canopy-layer-mid-left,
+.canopy-paused .canopy-layer-front-left,
+.canopy-paused .canopy-layer-back-right,
+.canopy-paused .canopy-layer-mid-right,
+.canopy-paused .canopy-layer-front-right {
+  animation-play-state: paused;
+}
+
 .animate-olive-sway {
   animation: oliveSway 6.5s ease-in-out infinite;
   transform-origin: left center;
@@ -132,17 +229,6 @@
 .animate-olive-drop {
   animation: oliveDropPulse 4.5s ease-in-out infinite;
   transform-origin: center;
-}
-
-.olive-atelier-texture {
-  background-color: #293b22;
-  background-image:
-    linear-gradient(135deg, rgba(35, 51, 28, 0.36) 0%, rgba(45, 65, 37, 0.22) 50%, rgba(31, 46, 25, 0.4) 100%),
-    radial-gradient(ellipse at 14% 12%, rgba(213, 195, 126, 0.14), transparent 52%),
-    radial-gradient(ellipse at 88% 88%, rgba(201, 186, 123, 0.12), transparent 50%),
-    url("/assets/aistudio/image_4917608d.png");
-  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
-  background-size: 100% 100%, 100% 100%, 100% 100%, 460px auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
